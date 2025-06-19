@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { WebhooksHelper } from 'square';
 import getRawBody from 'raw-body';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest } from 'next';
+import { NextApiResponseServerIo } from '@/types/index';
 
 export const config = {
   api: {
@@ -9,7 +10,7 @@ export const config = {
   },
 };
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextApiRequest, res: NextApiResponseServerIo) {
   const signature = req.headers['x-square-signature'] as string;
   const url = `https://<YOUR_VERCEL_URL>/api/webhooks/orders`; // Replace with your deployed URL
   const signatureKey = process.env.WEBHOOK_SECRET!;
@@ -30,7 +31,7 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
   const eventType = data.type;
   const orderData = data.data.object.order;
 
-  const io = (res.socket as any).server.io;
+  const io = res.socket.server.io;
   
   if (eventType === 'order.created') {
     io.emit('order.created', orderData);
