@@ -22,7 +22,9 @@ export async function GET() {
         typeof value === 'bigint' ? value.toString() : value
       )
     );
-    return NextResponse.json(safeOrders);
+    // Ensure we always return an `orders` array for the frontend
+    const orders = safeOrders.orders ?? safeOrders.result?.orders ?? [];
+    return NextResponse.json({ orders });
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
