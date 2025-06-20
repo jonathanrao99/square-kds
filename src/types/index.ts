@@ -8,4 +8,20 @@ export type NextApiResponseServerIo = NextApiResponse & {
       io: SocketIOServer;
     };
   };
-}; 
+};
+
+export interface LineItem {
+  uid: string;
+  quantity: string;
+  name?: string;
+}
+
+export interface Order {
+  id: string;
+  createdAt: string;
+  state: string;
+  lineItems: LineItem[];
+  source?: {
+    name: string;
+  }
+} 
