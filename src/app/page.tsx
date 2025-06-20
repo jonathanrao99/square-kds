@@ -64,7 +64,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-6">Kitchen Display System</h1>
+      <h1 className="text-3xl font-bold mb-6">Desi Flavors Katy KDS</h1>
       {/* Open tickets section */}
       <h2 className="text-2xl font-semibold mb-4">Open Tickets</h2>
       {openOrders.length > 0 ? (
