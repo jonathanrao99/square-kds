@@ -31,7 +31,7 @@ export default function Home() {
   if (error) return <div className="p-8 text-red-600">Failed to load orders</div>;
   if (!data) return <div className="p-8">Loading orders...</div>;
 
-  const orders: Order[] = data.orders;
+  const orders: Order[] = data?.orders ?? [];
   const openOrders = orders.filter((o) => o.state === 'OPEN');
   const completedOrders = orders.filter((o) => o.state !== 'OPEN');
 
