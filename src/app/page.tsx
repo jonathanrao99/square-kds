@@ -59,7 +59,7 @@ export default function Home() {
                 )}
               </div>
               <ul className="mb-4 space-y-2">
-                {order.lineItems.map((item) => (
+                {(order.lineItems ?? []).map((item) => (
                   <li key={item.uid} className="mb-2">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-100">{item.name ?? 'Item'}</span>
@@ -106,7 +106,7 @@ export default function Home() {
                 )}
               </div>
               <ul className="mb-4 space-y-2">
-                {order.lineItems.map((item) => (
+                {(order.lineItems ?? []).map((item) => (
                   <li key={item.uid} className="mb-2">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-100">{item.name ?? 'Item'}</span>
