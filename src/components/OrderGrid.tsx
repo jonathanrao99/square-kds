@@ -11,22 +11,18 @@ interface OrderGridProps {
 }
 
 export const OrderGrid = ({ orders, onDone, onReopen, pendingCompletion, completedTickets }: OrderGridProps) => (
-    <AnimatePresence>
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-5 items-start"
-        >
-          {orders.map(order => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onDone={() => onDone(order.id)}
-              onReopen={() => onReopen(order.id)}
-              isPending={pendingCompletion.has(order.id)}
-              isCompleted={completedTickets.has(order.id)}
-            />
-          ))}
-        </motion.div>
-    </AnimatePresence>
+    <div className="flex-grow flex gap-4 overflow-x-auto p-4 bg-black h-full">
+        <AnimatePresence>
+            {orders.map(order => (
+                <OrderCard
+                    key={order.id}
+                    order={order}
+                    onDone={() => onDone(order.id)}
+                    onReopen={() => onReopen(order.id)}
+                    isPending={pendingCompletion.has(order.id)}
+                    isCompleted={completedTickets.has(order.id)}
+                />
+            ))}
+        </AnimatePresence>
+    </div>
 ); 

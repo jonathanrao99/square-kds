@@ -21,6 +21,9 @@ export interface Order {
   createdAt: string;
   state: string;
   lineItems: LineItem[];
+  ticketName?: string;
+  isRush?: boolean;
+  completedAt?: string;
   source?: {
     name: string;
   }

@@ -37,20 +37,37 @@ export async function GET() {
                 stateFilter: {
                     states: ['OPEN'],
                 }
+            },
+            sort: {
+                sortField: 'CREATED_AT',
+                sortOrder: 'DESC'
             }
         }
     });
 
-    // Convert BigInt values to strings for JSON serialization
+    // Convert BigInt and identify rush orders
     const safeOrdersResponse = JSON.parse(
       JSON.stringify(ordersResponse, (_, value) =>
         typeof value === 'bigint' ? value.toString() : value
       )
     );
+    
+    let orders = safeOrdersResponse.orders ?? safeOrdersResponse.result?.orders ?? [];
+
+    // Manually add isRush flag and sort
+    orders.forEach((order: any) => {
+        order.isRush = order.ticketName?.toLowerCase().includes('rush');
+    });
+
+    orders.sort((a: any, b: any) => {
+        if (a.isRush && !b.isRush) return -1;
+        if (!a.isRush && b.isRush) return 1;
+        return 0;
+    });
+
     console.log("Raw orders response from Square:", JSON.stringify(safeOrdersResponse, null, 2));
 
     // Ensure we always return an `orders` array for the frontend
-    const orders = safeOrdersResponse.orders ?? safeOrdersResponse.result?.orders ?? [];
     console.log("Final orders being sent to frontend:", JSON.stringify(orders, null, 2));
 
     return NextResponse.json({ orders }, {
