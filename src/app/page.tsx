@@ -1,8 +1,6 @@
 "use client";
 
-import useSWR, { useSWRConfig } from 'swr';
-import { useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import useSWR from 'swr';
 
 interface Money {
   amount: string;
@@ -28,32 +26,7 @@ interface Order {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
-  const { data, error } = useSWR('/api/orders', fetcher);
-  const { mutate } = useSWRConfig();
-
-  useEffect(() => {
-    const socket: Socket = io({
-      path: '/api/socket',
-    });
-
-    socket.on('connect', () => {
-      console.log('Connected to Socket.IO server');
-    });
-
-    socket.on('order.created', (newOrder) => {
-      console.log('New order received:', newOrder);
-      mutate('/api/orders');
-    });
-
-    socket.on('order.updated', (updatedOrder) => {
-      console.log('Order updated:', updatedOrder);
-      mutate('/api/orders');
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [mutate]);
+  const { data, error } = useSWR('/api/orders', fetcher, { refreshInterval: 5000 });
 
   if (error) return <div className="p-8 text-red-600">Failed to load orders</div>;
   if (!data) return <div className="p-8">Loading orders...</div>;
