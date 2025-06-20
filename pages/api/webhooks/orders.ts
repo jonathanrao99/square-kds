@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
   }
 
   const signature = req.headers['x-square-signature'] as string;
-  const url = `https://kds-app-tau.vercel.app/api/webhooks/orders`; // Replace with your deployed URL
+  const url = `https://${process.env.VERCEL_URL}/api/webhooks/orders`;
   const signatureKey = process.env.WEBHOOK_SECRET!;
 
   const rawBody = await getRawBody(req);
