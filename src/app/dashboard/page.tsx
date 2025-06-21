@@ -1,25 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { Order } from '@/types';
 import { motion } from 'framer-motion';
 import { SubPageNav } from '@/components/SubPageNav';
-
-interface MetricCardProps {
-    title: string;
-    value: string | number;
-}
-
-const MetricCard = ({ title, value }: MetricCardProps) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-800 p-6 rounded-lg shadow-lg text-center"
-    >
-        <h3 className="text-lg font-semibold text-gray-400 mb-2">{title}</h3>
-        <p className="text-4xl font-bold text-white">{value}</p>
-    </motion.div>
-);
 
 const Dashboard = () => {
     // Note: The analytics logic is placeholder.

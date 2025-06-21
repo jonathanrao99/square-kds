@@ -16,11 +16,14 @@ export async function GET() {
   console.log("Fetching orders from Square API...");
   try {
     // Fetch locations to get location IDs for searching orders
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const locationsResponse: any = await (client.locations as any).listLocations();
     console.log("Locations response received.");
 
     const locationIds = (locationsResponse.result.locations ?? [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((l: any) => l.status === 'ACTIVE' && l.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((l: any) => l.id!);
     console.log("Found ACTIVE Location IDs:", locationIds);
     
@@ -30,6 +33,7 @@ export async function GET() {
     }
 
     // Search orders across locations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ordersResponse: any = await (client.orders as any).searchOrders({ 
       body: {
         locationIds,
@@ -54,13 +58,15 @@ export async function GET() {
       )
     );
     
-    let orders = safeOrdersResponse.orders ?? [];
+    const orders = safeOrdersResponse.orders ?? [];
 
     // Manually add isRush flag and sort
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     orders.forEach((order: any) => {
         order.isRush = order.ticketName?.toLowerCase().includes('rush');
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     orders.sort((a: any, b: any) => {
         if (a.isRush && !b.isRush) return -1;
         if (!a.isRush && b.isRush) return 1;
