@@ -6,11 +6,12 @@ interface OrderGridProps {
     orders: Order[];
     onDone: (orderId: string) => void;
     onReopen: (orderId: string) => void;
+    onCardClick: (order: Order) => void;
     pendingCompletion: Map<string, NodeJS.Timeout>;
     completedTickets: Set<string>;
 }
 
-export const OrderGrid = ({ orders, onDone, onReopen, pendingCompletion, completedTickets }: OrderGridProps) => (
+export const OrderGrid = ({ orders, onDone, onReopen, onCardClick, pendingCompletion, completedTickets }: OrderGridProps) => (
     <div className="flex-grow flex gap-4 overflow-x-auto p-4 bg-black h-full">
         <AnimatePresence>
             {orders.map(order => (
@@ -19,6 +20,7 @@ export const OrderGrid = ({ orders, onDone, onReopen, pendingCompletion, complet
                     order={order}
                     onDone={() => onDone(order.id)}
                     onReopen={() => onReopen(order.id)}
+                    onCardClick={() => onCardClick(order)}
                     isPending={pendingCompletion.has(order.id)}
                     isCompleted={completedTickets.has(order.id)}
                 />

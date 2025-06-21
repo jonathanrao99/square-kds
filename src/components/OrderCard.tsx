@@ -7,11 +7,12 @@ interface OrderCardProps {
   order: Order;
   onDone: () => void;
   onReopen: () => void;
+  onCardClick: () => void;
   isPending: boolean;
   isCompleted: boolean;
 }
 
-export function OrderCard({ order, onDone, onReopen, isPending, isCompleted }: OrderCardProps) {
+export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isCompleted }: OrderCardProps) {
   const [itemStatus, setItemStatus] = useState<Record<string, 'pending' | 'completed'>>({});
 
   useEffect(() => {
@@ -64,12 +65,15 @@ export function OrderCard({ order, onDone, onReopen, isPending, isCompleted }: O
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className="flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] max-h-full shrink-0"
-        onClick={isPending ? onReopen : undefined}
+        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] max-h-full shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
+        onClick={isPending ? onReopen : onCardClick}
     >
         <div className={`p-3 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
-            <h3 className="font-bold text-xl">{displayName}</h3>
-            <span className="text-sm font-medium"><TimeAgo date={order.createdAt} /></span>
+            <h3 className="font-bold text-2xl">{displayName}</h3>
+            <div className='flex flex-col items-end'>
+              {order.isRush && <span className="text-xs font-bold bg-white text-purple-600 px-2 py-1 rounded-full mb-1 animate-pulse">RUSH</span>}
+              <span className="text-sm font-medium"><TimeAgo date={order.createdAt} /></span>
+            </div>
         </div>
         <div className="flex-grow overflow-y-auto">
             <ul className="p-4 space-y-3">

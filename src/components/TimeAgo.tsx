@@ -9,9 +9,24 @@ export function TimeAgo({ date }: { date: string }) {
     }, []);
 
     const seconds = Math.floor((now - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return <>just now</>;
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return <>{minutes}m ago</>;
-    const hours = Math.floor(minutes / 60);
-    return <>{hours}h ago</>;
+
+    let colorClass = 'text-green-400';
+    if (minutes >= 10) {
+        colorClass = 'text-red-500 font-bold';
+    } else if (minutes >= 5) {
+        colorClass = 'text-yellow-400';
+    }
+
+    let timeDisplay;
+    if (seconds < 60) {
+        timeDisplay = 'just now';
+    } else if (minutes < 60) {
+        timeDisplay = `${minutes}m ago`;
+    } else {
+        const hours = Math.floor(minutes / 60);
+        timeDisplay = `${hours}h ago`;
+    }
+
+    return <span className={colorClass}>{timeDisplay}</span>;
 } 

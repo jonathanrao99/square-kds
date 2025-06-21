@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import useSWR, { mutate } from 'swr';
 import { AnimatePresence } from 'framer-motion';
+import io from 'socket.io-client';
 
 import { Order } from '@/types';
 import { Header } from '@/components/Header';
@@ -16,15 +17,39 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function Home() {
   const [tab, setTab] = useState<'open' | 'completed'>('open');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
-  const { data, error } = useSWR('/api/orders', fetcher, { 
-      refreshInterval: tab === 'open' ? 5000 : 36000000
-  });
+  const { data, error } = useSWR('/api/orders', fetcher);
   
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
   const [pendingCompletion, setPendingCompletion] = useState<Map<string, NodeJS.Timeout>>(new Map());
   const [modal, setModal] = useState<{isOpen: boolean, content: React.ReactNode, onConfirm: () => void}>({isOpen: false, content: null, onConfirm: () => {}});
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  useEffect(() => {
+    fetch('/api/socket');
+    const socket = io({
+        path: '/api/socket'
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected');
+    });
+
+    socket.on('order.created', (order) => {
+      console.log('New order received:', order);
+      mutate('/api/orders');
+    });
+
+    socket.on('order.updated', (order) => {
+        console.log('Order updated:', order);
+        mutate('/api/orders');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     mutate('/api/orders').finally(() => setTimeout(() => setIsRefreshing(false), 700));
@@ -33,7 +58,10 @@ export default function Home() {
   const openModal = (content: React.ReactNode, onConfirm: () => void) => {
     setModal({ isOpen: true, content, onConfirm });
   };
-  const closeModal = () => setModal(p => ({...p, isOpen: false}));
+  const closeModal = () => {
+    setModal(p => ({...p, isOpen: false}));
+    setSelectedOrder(null);
+  };
 
   const handleDoneClick = (orderId: string) => {
     openModal(<p>Mark ticket as done?</p>, () => {
@@ -74,6 +102,10 @@ export default function Home() {
       closeModal();
     });
   };
+
+  const handleCardClick = (order: Order) => {
+    setSelectedOrder(order);
+  };
   
   if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
   
@@ -81,12 +113,7 @@ export default function Home() {
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
   
   const openOrders = allOrders
-    .filter(o => !completedTickets.has(o.id) && new Date(o.createdAt) > oneHourAgo)
-    .sort((a, b) => {
-        if (a.isRush && !b.isRush) return -1;
-        if (!a.isRush && b.isRush) return 1;
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
+    .filter(o => !completedTickets.has(o.id) && new Date(o.createdAt) > oneHourAgo);
 
   const completedOrders = allOrders.filter(o => completedTickets.has(o.id));
   const displayedOrders = tab === 'open' ? openOrders : completedOrders;
@@ -95,18 +122,7 @@ export default function Home() {
 
   useEffect(() => {
     if (openOrders.length > prevOrderCount.current) {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A6 note
-        oscillator.start();
-        setTimeout(() => oscillator.stop(), 150);
+        // Sound notification logic will be re-implemented later
     }
     prevOrderCount.current = openOrders.length;
   }, [openOrders.length]);
@@ -146,6 +162,7 @@ export default function Home() {
                     orders={displayedOrders}
                     onDone={handleDoneClick}
                     onReopen={handleReopenClick}
+                    onCardClick={handleCardClick}
                     pendingCompletion={pendingCompletion}
                     completedTickets={completedTickets}
                 />
@@ -155,6 +172,24 @@ export default function Home() {
 
       <AnimatePresence>
           {modal.isOpen && <Modal onConfirm={modal.onConfirm} onCancel={closeModal}>{modal.content}</Modal>}
+          {selectedOrder && (
+            <Modal onCancel={closeModal} onConfirm={closeModal}>
+              <div className="p-4 text-white">
+                <h2 className="text-2xl font-bold mb-4">Order Details</h2>
+                <p><strong>ID:</strong> {selectedOrder.id}</p>
+                <p><strong>Ticket Name:</strong> {selectedOrder.ticketName}</p>
+                <p><strong>Created At:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                <p><strong>Source:</strong> {selectedOrder.source?.name}</p>
+                <p><strong>Rush Order:</strong> {selectedOrder.isRush ? 'Yes' : 'No'}</p>
+                <h3 className="text-xl font-bold mt-4 mb-2">Items</h3>
+                <ul>
+                  {selectedOrder.lineItems.map(item => (
+                    <li key={item.uid}>{item.quantity} x {item.name}</li>
+                  ))}
+                </ul>
+              </div>
+            </Modal>
+          )}
       </AnimatePresence>
     </div>
   );
