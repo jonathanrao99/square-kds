@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
+    "@types/react-timeago": "^4.1.7",
     "framer-motion": "^12.18.1",
     "next": "15.3.4",
+    "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-timeago": "^8.2.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "square": "^43.0.0",

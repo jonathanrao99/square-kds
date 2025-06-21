@@ -10,10 +10,16 @@ export type NextApiResponseServerIo = NextApiResponse & {
   };
 };
 
+export interface Modifier {
+  uid: string;
+  name?: string;
+}
+
 export interface LineItem {
   uid: string;
   quantity: string;
   name?: string;
+  modifiers?: Modifier[];
 }
 
 export interface Order {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Order } from '@/types';
+import { Order, LineItem } from '@/types';
 
 interface AllDayViewProps {
     orders: Order[];
@@ -11,16 +11,22 @@ interface AllDayViewProps {
 interface AggregatedItem {
     name: string;
     quantity: number;
+    modifiers?: { name: string; quantity: number }[];
+}
+
+const getItemIdentifier = (item: LineItem) => {
+    const sortedModifiers = item.modifiers?.map(m => m.name).sort().join(', ') || '';
+    return `${item.name}${sortedModifiers ? ` (${sortedModifiers})` : ''}`;
 }
 
 export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
-    const aggregatedItems = useMemo<AggregatedItem[]>(() => {
+    const aggregatedItems = useMemo(() => {
         const itemMap = new Map<string, number>();
         orders.forEach(order => {
             order.lineItems.forEach(item => {
-                const name = item.name || 'Unknown Item';
-                const currentQuantity = itemMap.get(name) || 0;
-                itemMap.set(name, currentQuantity + Number(item.quantity));
+                const identifier = getItemIdentifier(item);
+                const currentQuantity = itemMap.get(identifier) || 0;
+                itemMap.set(identifier, currentQuantity + Number(item.quantity));
             });
         });
 
@@ -48,14 +54,21 @@ export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
                     {aggregatedItems.map(item => (
                         <motion.li 
                             key={item.name}
-                            initial={{ opacity: 0, x: -10 }}
+                            initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="flex justify-between items-center text-md bg-gray-800 p-3 rounded-md hover:bg-gray-700/50 transition-colors"
+                            exit={{ opacity: 0, x: -20 }}
+                            layout
+                            className="text-md bg-gray-800 p-3 rounded-md hover:bg-gray-700/50 transition-colors"
                         >
-                            <span className="font-semibold truncate pr-4">{item.name}</span>
-                            <span className="font-bold text-lg bg-gray-700 w-8 h-8 flex items-center justify-center rounded-full">{item.quantity}</span>
+                            <div className="flex justify-between items-center">
+                                <span className="font-semibold truncate pr-4">{item.name}</span>
+                                <span className="font-bold text-lg bg-blue-600 w-10 h-10 flex items-center justify-center rounded-full flex-shrink-0">{item.quantity}</span>
+                            </div>
                         </motion.li>
                     ))}
+                    {aggregatedItems.length === 0 && (
+                        <p className="text-gray-400 text-center mt-8">No open orders.</p>
+                    )}
                 </ul>
             </div>
         </motion.div>

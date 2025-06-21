@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { SquareClient, SquareEnvironment } from 'square';
 
 // Environment variable validation
@@ -12,19 +12,23 @@ const client = new SquareClient({
   environment: process.env.SANDBOX === 'true' ? SquareEnvironment.Sandbox : SquareEnvironment.Production,
 });
 
-export async function GET() {
-  console.log("Fetching orders from Square API...");
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const status = searchParams.get('status') || 'open';
+  const timeFilter = searchParams.get('timeFilter');
+
+  console.log(`Fetching ${status.toUpperCase()} orders from Square API...`);
+  
   try {
     // Fetch locations to get location IDs for searching orders
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const locationsResponse: any = await (client.locations as any).listLocations();
+    // Retrieve all locations
+    const locationsResponse = await client.locations.list();
     console.log("Locations response received.");
 
-    const locationIds = (locationsResponse.result.locations ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((l: any) => l.status === 'ACTIVE' && l.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((l: any) => l.id!);
+    // Extract active location IDs
+    const locationIds = (locationsResponse.locations ?? [])
+      .filter(l => l.status === 'ACTIVE' && l.id)
+      .map(l => l.id!);
     console.log("Found ACTIVE Location IDs:", locationIds);
     
     if (locationIds.length === 0) {
@@ -32,28 +36,47 @@ export async function GET() {
         return NextResponse.json({ orders: [] });
     }
 
-    // Search orders across locations
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ordersResponse: any = await (client.orders as any).searchOrders({ 
-      body: {
-        locationIds,
-        query: {
-            filter: {
-                stateFilter: {
-                    states: ['OPEN'],
-                }
-            },
-            sort: {
-                sortField: 'CREATED_AT',
-                sortOrder: 'DESC'
-            }
+    const query: any = {
+      locationIds,
+      query: {
+        filter: {
+          stateFilter: {
+            states: [status.toUpperCase()],
+          }
+        },
+        sort: {
+          sortField: 'CREATED_AT',
+          sortOrder: 'DESC'
         }
       }
-    });
+    };
 
-    // Convert BigInt and identify rush orders
+    if (status === 'completed' && timeFilter) {
+      const now = new Date();
+      let startAt: Date;
+
+      if (timeFilter === 'day') {
+        startAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      } else if (timeFilter === 'week') {
+        startAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+      } else { // month
+        startAt = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      }
+      
+      query.query.filter.dateTimeFilter = {
+        createdAt: {
+          startAt: startAt.toISOString(),
+        }
+      };
+      query.query.sort.sortField = 'CLOSED_AT';
+    }
+
+    // Search orders across locations
+    const ordersResponse = await client.orders.search(query);
+
+    // Convert BigInt values to strings for JSON serialization
     const safeOrdersResponse = JSON.parse(
-      JSON.stringify(ordersResponse.result, (_, value) =>
+      JSON.stringify(ordersResponse, (_, value) =>
         typeof value === 'bigint' ? value.toString() : value
       )
     );

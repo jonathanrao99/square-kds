@@ -19,6 +19,24 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
       addTrailingSlash: false,
     });
 
+    io.on('connection', (socket) => {
+      console.log('Socket.IO: A client connected');
+
+      socket.on('order.complete', (orderId) => {
+        console.log(`Socket.IO: Received order.complete for ${orderId}`);
+        socket.broadcast.emit('order.completed', orderId);
+      });
+
+      socket.on('order.reopen', (orderId) => {
+        console.log(`Socket.IO: Received order.reopen for ${orderId}`);
+        socket.broadcast.emit('order.reopened', orderId);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Socket.IO: A client disconnected');
+      });
+    });
+
     res.socket.server.io = io;
   }
   res.end();

@@ -1,10 +1,42 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { SubPageNav } from '@/components/SubPageNav';
 
 export default function Settings() {
-  const [theme, setTheme] = useState('dark');
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [openTime, setOpenTime] = useState('17:00');
+  const [closeTime, setCloseTime] = useState('01:00');
+  const [warningTime, setWarningTime] = useState(5);
+  const [dangerTime, setDangerTime] = useState(10);
+
+  useEffect(() => {
+    setMounted(true);
+    const storedOpenTime = localStorage.getItem('openTime');
+    const storedCloseTime = localStorage.getItem('closeTime');
+    const storedWarningTime = localStorage.getItem('timerWarningTime');
+    const storedDangerTime = localStorage.getItem('timerDangerTime');
+
+    if (storedOpenTime) setOpenTime(storedOpenTime);
+    if (storedCloseTime) setCloseTime(storedCloseTime);
+    if (storedWarningTime) setWarningTime(parseInt(storedWarningTime, 10));
+    if (storedDangerTime) setDangerTime(parseInt(storedDangerTime, 10));
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('openTime', openTime);
+      localStorage.setItem('closeTime', closeTime);
+      localStorage.setItem('timerWarningTime', String(warningTime));
+      localStorage.setItem('timerDangerTime', String(dangerTime));
+    }
+  }, [openTime, closeTime, warningTime, dangerTime, mounted]);
+  
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>
@@ -47,6 +79,60 @@ export default function Settings() {
           <div className="p-6 bg-gray-800 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Refresh Interval</h2>
             <p className="text-gray-400">Placeholder for refresh interval settings.</p>
+          </div>
+
+          {/* Timer Alert Settings */}
+          <div className="p-6 bg-gray-800 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4">Timer Alerts (in minutes)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="warningTime" className="block text-sm font-medium text-gray-300">Warning Time</label>
+                <input 
+                  type="number"
+                  id="warningTime"
+                  value={warningTime}
+                  onChange={(e) => setWarningTime(Math.max(0, parseInt(e.target.value, 10)))}
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <label htmlFor="dangerTime" className="block text-sm font-medium text-gray-300">Danger Time</label>
+                <input 
+                  type="number" 
+                  id="dangerTime"
+                  value={dangerTime}
+                  onChange={(e) => setDangerTime(Math.max(0, parseInt(e.target.value, 10)))}
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-700 text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Business Hours Settings */}
+          <div className="p-6 bg-gray-800 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4">Business Hours</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="openTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Open Time</label>
+                <input 
+                  type="time"
+                  id="openTime"
+                  value={openTime}
+                  onChange={(e) => setOpenTime(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <label htmlFor="closeTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Close Time</label>
+                <input 
+                  type="time" 
+                  id="closeTime"
+                  value={closeTime}
+                  onChange={(e) => setCloseTime(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </main>
