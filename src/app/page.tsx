@@ -107,8 +107,6 @@ export default function Home() {
     setSelectedOrder(order);
   };
   
-  if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
-  
   const allOrders: Order[] = data?.orders ?? [];
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
   
@@ -126,6 +124,8 @@ export default function Home() {
     }
     prevOrderCount.current = openOrders.length;
   }, [openOrders.length]);
+
+  if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
 
   return (
     <div className="h-screen bg-black flex flex-col font-sans">

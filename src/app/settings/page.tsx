@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { Header } from '@/components/Header';
 import { SubPageNav } from '@/components/SubPageNav';
 
 export default function Settings() {

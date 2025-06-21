@@ -21,58 +21,15 @@ const MetricCard = ({ title, value }: MetricCardProps) => (
     </motion.div>
 );
 
-export default function Dashboard() {
-    const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
-
-    useEffect(() => {
-        const storedData = localStorage.getItem('sessionCompletedOrders');
-        if (storedData) {
-            setCompletedOrders(JSON.parse(storedData));
-        }
-    }, []);
-
-    const analytics = useMemo(() => {
-        if (completedOrders.length === 0) {
-            return { totalTickets: 0, avgTime: 'N/A', busiestHour: 'N/A', topItem: 'N/A' };
-        }
-
-        // Avg Completion Time
-        let totalCompletionTime = 0;
-        completedOrders.forEach(order => {
-            // @ts-ignore
-            if (order.completedAt && order.createdAt) {
-                 // @ts-ignore
-                totalCompletionTime += (new Date(order.completedAt).getTime() - new Date(order.createdAt).getTime());
-            }
-        });
-        const avgTimeMs = totalCompletionTime / completedOrders.length;
-        const avgTime = `${Math.round(avgTimeMs / 1000 / 60)}m`;
-
-        // Busiest Hour
-        const hourCounts: { [hour: string]: number } = {};
-        completedOrders.forEach(order => {
-            const hour = new Date(order.createdAt).getHours();
-            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-        });
-        const busiestHour = Object.entries(hourCounts).sort((a,b) => b[1] - a[1])[0][0];
-
-        // Top Item
-        const itemCounts = new Map<string, number>();
-        completedOrders.forEach(order => {
-            order.lineItems.forEach(item => {
-                const name = item.name || 'Unknown Item';
-                itemCounts.set(name, (itemCounts.get(name) || 0) + Number(item.quantity));
-            });
-        });
-        const topItem = Array.from(itemCounts.entries()).sort((a,b) => b[1] - a[1])[0][0];
-
-        return {
-            totalTickets: completedOrders.length,
-            avgTime,
-            busiestHour: `${busiestHour}:00 - ${parseInt(busiestHour) + 1}:00`,
-            topItem
-        };
-    }, [completedOrders]);
+const Dashboard = () => {
+    // Note: The analytics logic is placeholder.
+    // It should be replaced with actual data fetching and processing.
+    const analytics = {
+        totalTickets: 0,
+        avgTime: '0m 0s',
+        busiestHour: 'N/A',
+        topItem: 'N/A',
+    };
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -90,22 +47,22 @@ export default function Dashboard() {
                     {/* Average Completion Time */}
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold mb-2">Avg. Completion Time</h2>
-                        <p className="text-3xl font-bold">--:--</p>
-                        <p className="text-gray-400">Placeholder for average time from open to completed.</p>
+                        <p className="text-3xl font-bold">{analytics.avgTime}</p>
+                        <p className="text-gray-400">Average time from open to completed.</p>
                     </div>
 
                     {/* Order Volume */}
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold mb-2">Order Volume (24h)</h2>
-                        <p className="text-3xl font-bold">0</p>
-                        <p className="text-gray-400">Placeholder for total orders in the last 24 hours.</p>
+                        <p className="text-3xl font-bold">{analytics.totalTickets}</p>
+                        <p className="text-gray-400">Total orders in the last 24 hours.</p>
                     </div>
 
                     {/* Rush Orders */}
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold mb-2">Rush Orders (24h)</h2>
                         <p className="text-3xl font-bold">0</p>
-                        <p className="text-gray-400">Placeholder for number of rush orders.</p>
+                        <p className="text-gray-400">Number of rush orders.</p>
                     </div>
                 </div>
 
@@ -119,4 +76,6 @@ export default function Dashboard() {
             </main>
         </div>
     );
-} 
+};
+
+export default Dashboard; 

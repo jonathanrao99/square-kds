@@ -12,54 +12,44 @@ const client = new SquareClient({
   environment: process.env.SANDBOX === 'true' ? SquareEnvironment.Sandbox : SquareEnvironment.Production,
 });
 
-let locationIds: string[] | undefined;
-
-async function getLocationIds() {
-    if (locationIds) {
-        return locationIds;
-    }
-    console.log("Fetching location IDs from Square API...");
-    const { result: { locations } } = await client.locations.listLocations();
-    const activeLocationIds = (locations ?? [])
-      .filter((l: any) => l.status === 'ACTIVE' && l.id)
-      .map((l: any) => l.id!);
-    
-    console.log("Found ACTIVE Location IDs:", activeLocationIds);
-    locationIds = activeLocationIds;
-    return locationIds;
-}
-
 export async function GET() {
   console.log("Fetching orders from Square API...");
   try {
-    const locationIds = await getLocationIds();
+    // Fetch locations to get location IDs for searching orders
+    const locationsResponse: any = await (client.locations as any).listLocations();
+    console.log("Locations response received.");
+
+    const locationIds = (locationsResponse.result.locations ?? [])
+      .filter((l: any) => l.status === 'ACTIVE' && l.id)
+      .map((l: any) => l.id!);
+    console.log("Found ACTIVE Location IDs:", locationIds);
     
-    if (!locationIds || locationIds.length === 0) {
+    if (locationIds.length === 0) {
         console.log("No location IDs found, returning empty orders array.");
         return NextResponse.json({ orders: [] });
     }
 
     // Search orders across locations
-    const { result: ordersResponse } = await client.orders.searchOrders({
+    const ordersResponse: any = await (client.orders as any).searchOrders({ 
       body: {
         locationIds,
         query: {
-          filter: {
-            stateFilter: {
-              states: ['OPEN'],
+            filter: {
+                stateFilter: {
+                    states: ['OPEN'],
+                }
             },
-          },
-          sort: {
-            sortField: 'CREATED_AT',
-            sortOrder: 'DESC',
-          },
-        },
-      },
+            sort: {
+                sortField: 'CREATED_AT',
+                sortOrder: 'DESC'
+            }
+        }
+      }
     });
 
     // Convert BigInt and identify rush orders
     const safeOrdersResponse = JSON.parse(
-      JSON.stringify(ordersResponse, (_, value) =>
+      JSON.stringify(ordersResponse.result, (_, value) =>
         typeof value === 'bigint' ? value.toString() : value
       )
     );

@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Order } from '@/types';
 import { OrderCard } from './OrderCard';
 
