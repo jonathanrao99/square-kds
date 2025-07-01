@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { SquareClient, SquareEnvironment } from 'square';
 
 // Environment variable validation
@@ -12,67 +12,61 @@ const client = new SquareClient({
   environment: process.env.SANDBOX === 'true' ? SquareEnvironment.Sandbox : SquareEnvironment.Production,
 });
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const status = searchParams.get('status') || 'open';
-  const timeFilter = searchParams.get('timeFilter');
+function getDateRange(range: string) {
+  const now = new Date();
+  let start: Date;
+  if (range === 'day') {
+    start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  } else if (range === 'week') {
+    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  } else if (range === 'month') {
+    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  } else {
+    return undefined;
+  }
+  return { startAt: start.toISOString(), endAt: now.toISOString() };
+}
 
-  console.log(`Fetching ${status.toUpperCase()} orders from Square API...`);
-  
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const statusParam = searchParams.get('status') || 'OPEN';
+  const range = searchParams.get('range') || '';
+
+  // Support multiple states (e.g., OPEN,PAID,COMPLETED)
+  const states = statusParam.split(',').map(s => s.trim().toUpperCase());
+  const dateRange = getDateRange(range);
+
   try {
     // Fetch locations to get location IDs for searching orders
-    // Retrieve all locations
     const locationsResponse = await client.locations.list();
-    console.log("Locations response received.");
-
-    // Extract active location IDs
     const locationIds = (locationsResponse.locations ?? [])
       .filter(l => l.status === 'ACTIVE' && l.id)
       .map(l => l.id!);
-    console.log("Found ACTIVE Location IDs:", locationIds);
-    
     if (locationIds.length === 0) {
-        console.log("No location IDs found, returning empty orders array.");
         return NextResponse.json({ orders: [] });
     }
 
-    const query: any = {
-      locationIds,
-      query: {
-        filter: {
-          stateFilter: {
-            states: [status.toUpperCase()],
-          }
-        },
-        sort: {
-          sortField: 'CREATED_AT',
-          sortOrder: 'DESC'
-        }
+    // Build filter
+    const filter: any = { stateFilter: { states } };
+    if (dateRange) {
+      // For completed orders, filter by closedAt; otherwise, by createdAt
+      if (states.includes('COMPLETED')) {
+        filter.dateTimeFilter = { closedAt: dateRange };
+      } else {
+        filter.dateTimeFilter = { createdAt: dateRange };
       }
-    };
-
-    if (status === 'completed' && timeFilter) {
-      const now = new Date();
-      let startAt: Date;
-
-      if (timeFilter === 'day') {
-        startAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      } else if (timeFilter === 'week') {
-        startAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-      } else { // month
-        startAt = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      }
-      
-      query.query.filter.dateTimeFilter = {
-        createdAt: {
-          startAt: startAt.toISOString(),
-        }
-      };
-      query.query.sort.sortField = 'CLOSED_AT';
     }
 
-    // Search orders across locations
-    const ordersResponse = await client.orders.search(query);
+    // Search orders
+    const ordersResponse = await ordersApi.searchOrders({
+            locationIds: [locationId],
+            query: {
+                filter: {
+                    stateFilter: {
+                        states: ['OPEN', 'COMPLETED']
+                    },
+                    // Fetch orders from the last 24 hours
+                    dateTimeFilter: {
 
     // Convert BigInt values to strings for JSON serialization
     const safeOrdersResponse = JSON.parse(
@@ -80,26 +74,17 @@ export async function GET(request: NextRequest) {
         typeof value === 'bigint' ? value.toString() : value
       )
     );
-    
     const orders = safeOrdersResponse.orders ?? [];
 
     // Manually add isRush flag and sort
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    orders.forEach((order: any) => {
+    (orders as any[]).forEach((order: any) => {
         order.isRush = order.ticketName?.toLowerCase().includes('rush');
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    orders.sort((a: any, b: any) => {
+    (orders as any[]).sort((a: any, b: any) => {
         if (a.isRush && !b.isRush) return -1;
         if (!a.isRush && b.isRush) return 1;
         return 0;
     });
-
-    console.log("Raw orders response from Square:", JSON.stringify(safeOrdersResponse, null, 2));
-
-    // Ensure we always return an `orders` array for the frontend
-    console.log("Final orders being sent to frontend:", JSON.stringify(orders, null, 2));
 
     return NextResponse.json({ orders }, {
         headers: {

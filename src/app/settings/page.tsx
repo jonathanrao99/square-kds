@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { SubPageNav } from '@/components/SubPageNav';
+import { SimpleNavbar } from '@/components/SimpleNavbar';
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -39,24 +40,24 @@ export default function Settings() {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>
-      <SubPageNav />
+    <div className={`min-h-screen bg-[#181818] text-white`}>
+      <SimpleNavbar />
       <main className="p-8">
         <h1 className="text-4xl font-bold mb-8">Settings</h1>
         <div className="space-y-12">
           {/* Theme Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Theme</h2>
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => setTheme('dark')}
-                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-blue-600' : 'bg-gray-700'}`}
+                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-orange-600' : 'bg-[#333]'}`}
               >
                 Dark
               </button>
               <button 
                 onClick={() => setTheme('light')}
-                className={`px-4 py-2 rounded-md ${theme === 'light' ? 'bg-blue-600' : 'bg-gray-700'}`}
+                className={`px-4 py-2 rounded-md ${theme === 'light' ? 'bg-orange-600' : 'bg-[#333]'}`}
               >
                 Light
               </button>
@@ -64,25 +65,25 @@ export default function Settings() {
           </div>
 
           {/* Sound Notification Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Sound Notifications</h2>
             <p className="text-gray-400">Placeholder for sound settings.</p>
           </div>
 
           {/* Location Filtering Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Location Filtering</h2>
             <p className="text-gray-400">Placeholder for location filtering.</p>
           </div>
 
           {/* Refresh Interval Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Refresh Interval</h2>
             <p className="text-gray-400">Placeholder for refresh interval settings.</p>
           </div>
 
           {/* Timer Alert Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Timer Alerts (in minutes)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -92,7 +93,7 @@ export default function Settings() {
                   id="warningTime"
                   value={warningTime}
                   onChange={(e) => setWarningTime(Math.max(0, parseInt(e.target.value, 10)))}
-                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-700 text-white"
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm bg-[#181818] text-white"
                 />
               </div>
               <div>
@@ -102,34 +103,34 @@ export default function Settings() {
                   id="dangerTime"
                   value={dangerTime}
                   onChange={(e) => setDangerTime(Math.max(0, parseInt(e.target.value, 10)))}
-                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-700 text-white"
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm bg-[#181818] text-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Business Hours Settings */}
-          <div className="p-6 bg-gray-800 rounded-lg">
+          <div className="p-6 bg-[#232323] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Business Hours</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="openTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Open Time</label>
+                <label htmlFor="openTime" className="block text-sm font-medium text-gray-300">Open Time</label>
                 <input 
                   type="time"
                   id="openTime"
                   value={openTime}
                   onChange={(e) => setOpenTime(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800"
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm bg-[#181818] text-white"
                 />
               </div>
               <div>
-                <label htmlFor="closeTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Close Time</label>
+                <label htmlFor="closeTime" className="block text-sm font-medium text-gray-300">Close Time</label>
                 <input 
                   type="time" 
                   id="closeTime"
                   value={closeTime}
                   onChange={(e) => setCloseTime(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white dark:bg-gray-800"
+                  className="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm bg-[#181818] text-white"
                 />
               </div>
             </div>

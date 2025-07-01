@@ -5,7 +5,6 @@ import useSWR, { mutate } from 'swr';
 import { AnimatePresence } from 'framer-motion';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
-import TimeAgo from 'react-timeago';
 
 import { Order, LineItem } from '@/types';
 import { Header } from '@/components/Header';
@@ -32,12 +31,12 @@ export interface Filters {
 
 export default function Home() {
   const [tab, setTab] = useState<'open' | 'completed'>('open');
+  const [completedRange, setCompletedRange] = useState<'day' | 'week' | 'month'>('day');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [apiUrl, setApiUrl] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({});
-  const [completedTimeFilter, setCompletedTimeFilter] = useState<'day' | 'week' | 'month'>('day');
 
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
   const [pendingCompletion, setPendingCompletion] = useState<Map<string, NodeJS.Timeout>>(new Map());
@@ -49,12 +48,11 @@ export default function Home() {
     // This effect runs only on the client-side
     const openTime = localStorage.getItem('openTime') || '17:00';
     const closeTime = localStorage.getItem('closeTime') || '01:00';
-    
-    let url = `/api/orders?status=${tab}`;
+    let url = '';
     if (tab === 'open') {
-      url += `&openTime=${encodeURIComponent(openTime)}&closeTime=${encodeURIComponent(closeTime)}`;
+      url = `/api/orders?status=OPEN&openTime=${encodeURIComponent(openTime)}&closeTime=${encodeURIComponent(closeTime)}`;
     } else {
-      url += `&timeFilter=${completedTimeFilter}`;
+      url = `/api/orders?status=COMPLETED&range=${completedRange}&openTime=${encodeURIComponent(openTime)}&closeTime=${encodeURIComponent(closeTime)}`;
     }
     setApiUrl(url);
 
@@ -104,7 +102,7 @@ export default function Home() {
     return () => {
       socket.disconnect();
     };
-  }, [tab, completedTimeFilter]);
+  }, [tab, completedRange]);
 
   const handleRefresh = () => {
     if(apiUrl) {
@@ -201,42 +199,40 @@ export default function Home() {
     prevOrderCount.current = openOrders.length;
   }, [openOrders.length]);
 
-  if (error) return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Failed to load orders. Please try again.</div>;
+  if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col font-sans text-white">
-      <div className="p-3 border-b border-gray-700/50 shrink-0">
-        <Header 
-          tab={tab}
-          setTab={setTab}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-          filters={filters}
-          setFilters={setFilters}
-          allOrders={allOrders}
-          completedTimeFilter={completedTimeFilter}
-          setCompletedTimeFilter={setCompletedTimeFilter}
-        />
-      </div>
-      
+    <div className="min-h-screen bg-white text-[#181818] flex flex-col font-sans">
+      <Header 
+        tab={tab}
+        setTab={setTab}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        filters={filters}
+        setFilters={setFilters}
+        allOrders={allOrders}
+        completedRange={completedRange}
+        setCompletedRange={setCompletedRange}
+        showCompletedRange={tab === 'completed'}
+      />
       <div className="flex-grow flex flex-row overflow-hidden">
         <AllDayView 
             orders={openOrders} 
             isOpen={isAllDayViewOpen} 
             onClose={() => setIsAllDayViewOpen(false)} 
         />
-        <main className="flex-grow p-4 md:p-6 overflow-x-auto">
+        <main className="flex-grow p-6 overflow-x-auto">
             {!isAllDayViewOpen && (
                  <button 
                     onClick={() => setIsAllDayViewOpen(true)}
-                    className="fixed top-1/2 -translate-y-1/2 left-0 bg-gray-800 text-white p-2 rounded-r-lg z-20 hover:bg-gray-700 transition-colors"
+                    className="fixed top-1/2 -translate-y-1/2 left-0 bg-[#fff] text-[#181818] p-3 rounded-r-lg z-20 hover:bg-orange-50 transition-colors border border-[#eee]"
                     aria-label="Open All Day View"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                 </button>
             )}
            
-            {isLoading ? (
+            {!data ? (
                 <SkeletonLoader />
             ) : (
                 <OrderGrid 
@@ -250,33 +246,21 @@ export default function Home() {
             )}
         </main>
       </div>
-
       <AnimatePresence>
           {modal.isOpen && <Modal onConfirm={modal.onConfirm} onCancel={closeModal}>{modal.content}</Modal>}
           {selectedOrder && (
             <Modal onCancel={closeModal} onConfirm={closeModal}>
-              <div className="p-4 bg-gray-800 rounded-lg text-white max-w-lg w-full">
-                <h2 className="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Order Details</h2>
-                <div className="space-y-2">
-                    <p><strong>Ticket:</strong> {selectedOrder.ticketName || `#${selectedOrder.id.slice(-6)}`}</p>
-                    <p><strong>Received:</strong> <TimeAgo date={selectedOrder.createdAt} /></p>
-                    <p><strong>Source:</strong> {selectedOrder.source?.name || 'In-Store'}</p>
-                    <p><strong>Rush Order:</strong> {selectedOrder.isRush ? 
-                        <span className='text-purple-400 font-bold'>Yes</span> : 
-                        'No'
-                    }</p>
-                </div>
-                <h3 className="text-xl font-bold mt-6 mb-3 border-b border-gray-700 pb-2">Items</h3>
-                <ul className="space-y-3 max-h-60 overflow-y-auto">
+              <div className="p-4 text-[#181818]">
+                <h2 className="text-2xl font-bold mb-4">Order Details</h2>
+                <p><strong>ID:</strong> {selectedOrder.id}</p>
+                <p><strong>Ticket Name:</strong> {selectedOrder.ticketName}</p>
+                <p><strong>Created At:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                <p><strong>Source:</strong> {selectedOrder.source?.name}</p>
+                <p><strong>Rush Order:</strong> {selectedOrder.isRush ? 'Yes' : 'No'}</p>
+                <h3 className="text-xl font-bold mt-4 mb-2">Items</h3>
+                <ul>
                   {selectedOrder.lineItems.map(item => (
-                    <li key={item.uid} className="bg-gray-700/50 p-2 rounded-md">
-                        <span className="font-bold">{item.quantity}x</span> {item.name}
-                        {item.modifiers && item.modifiers.length > 0 && (
-                            <ul className="pl-6 text-sm text-gray-400">
-                                {item.modifiers.map(mod => <li key={mod.uid}>- {mod.name}</li>)}
-                            </ul>
-                        )}
-                    </li>
+                    <li key={item.uid}>{item.quantity} x {item.name}</li>
                   ))}
                 </ul>
               </div>

@@ -16,6 +16,9 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerSettings, setTimerSettings] = useState({ warningTime: 300, dangerTime: 600 });
 
+  const isPaid = order.state === 'OPEN' && Array.isArray((order as any).tenders) && (order as any).tenders.length > 0;
+  const sourceLabel = order.source?.name ? order.source.name : null;
+
   useEffect(() => {
     // This effect runs only on the client-side
     const warning = localStorage.getItem('timerWarningTime');
@@ -132,17 +135,19 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border-2 ${timerStyle.borderColor} ${timerStyle.cardBg} w-full max-w-sm shrink-0 transition-colors duration-500`}
+        className={`flex flex-col rounded-lg shadow bg-white text-[#181818] border border-[#eee] w-full max-w-sm shrink-0 transition-colors duration-500 p-0 mb-4`}
         onClick={isPending ? onReopen : onCardClick}
     >
-        <div className={`p-3 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
-            <h3 className="font-bold text-2xl">{displayName}</h3>
-            <div className='flex flex-col items-end'>
-              {order.isRush && <span className="text-xs font-bold bg-white text-purple-600 px-2 py-1 rounded-full mb-1 animate-pulse">RUSH</span>}
-              <span className={`text-xl font-mono font-bold ${timerStyle.textColor} transition-colors duration-500`}>
-                {isCompleted ? 'Done' : formatTime(elapsedTime)}
-              </span>
+        <div className={`p-3 rounded-t-lg flex justify-between items-center shrink-0 bg-orange-50 border-b border-[#eee]`}> 
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-2xl">{displayName}</h3>
+              {order.isRush && <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded-full">RUSH</span>}
+              {isPaid && <span className="text-xs font-bold bg-orange-600 text-white px-2 py-1 rounded-full">PAID</span>}
+              {sourceLabel && <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2 py-1 rounded-full border border-orange-200">{sourceLabel}</span>}
             </div>
+            <span className={`text-xl font-mono font-bold ${timerStyle.textColor} transition-colors duration-500`}>
+              {isCompleted ? 'Done' : formatTime(elapsedTime)}
+            </span>
         </div>
         <div className="flex-shrink-0 overflow-y-auto">
             <ul className="p-4 space-y-3">

@@ -41,16 +41,16 @@ export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
             initial={false}
             animate={{ width: isOpen ? 300 : 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-            className="h-full bg-gray-900 border-r border-gray-800 overflow-hidden shrink-0"
+            className="h-[calc(100vh-72px)] min-h-0 bg-white border-r border-[#eee] overflow-hidden shrink-0 flex flex-col"
         >
-            <div className="p-4 h-full w-[300px]">
+            <div className="p-4 h-full w-[300px] flex flex-col">
                 <div className="flex items-center mb-6">
-                    <button onClick={onClose} className="text-2xl text-white p-2 hover:bg-gray-700 rounded-full mr-2">
+                    <button onClick={onClose} className="text-2xl text-[#181818] p-2 hover:bg-orange-50 rounded-full mr-2">
                         &lt;
                     </button>
-                    <h2 className="text-2xl font-bold text-white">All Day</h2>
+                    <h2 className="text-2xl font-bold text-[#181818]">All Day</h2>
                 </div>
-                <ul className="space-y-2 text-white overflow-y-auto h-[calc(100%-4rem)]">
+                <ul className="space-y-2 text-[#181818] overflow-y-auto flex-1">
                     {aggregatedItems.map(item => (
                         <motion.li 
                             key={item.name}
@@ -58,11 +58,11 @@ export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             layout
-                            className="text-md bg-gray-800 p-3 rounded-md hover:bg-gray-700/50 transition-colors"
+                            className="text-md bg-orange-50 p-3 rounded-md hover:bg-orange-100 transition-colors"
                         >
                             <div className="flex justify-between items-center">
                                 <span className="font-semibold truncate pr-4">{item.name}</span>
-                                <span className="font-bold text-lg bg-blue-600 w-10 h-10 flex items-center justify-center rounded-full flex-shrink-0">{item.quantity}</span>
+                                <span className="font-bold text-lg bg-orange-600 text-white w-10 h-10 flex items-center justify-center rounded-full flex-shrink-0">{item.quantity}</span>
                             </div>
                         </motion.li>
                     ))}
