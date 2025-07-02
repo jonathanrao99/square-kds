@@ -18,7 +18,7 @@ const Dashboard = () => {
             <SubPageNav />
             <main className="p-8">
                 <motion.h1 
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: -19 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-4xl font-bold mb-8"
                 >
