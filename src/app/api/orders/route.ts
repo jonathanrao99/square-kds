@@ -15,6 +15,8 @@ const safeStringify = (
     space
   );
 
+type KDSOrder = SquareOrder & { isRush?: boolean; isPaid?: boolean };
+
 async function fetchOrders(locationIds: string[], states: string[]): Promise<SquareOrder[]> {
     const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
     const query: SearchOrdersRequest = {
@@ -71,8 +73,14 @@ export async function GET(request: Request) {
     console.log("Fetching locations...");
     const locationsResponse = await squareClient.locations.list();
     console.log("Locations response received.");
-    const locations: any[] = locationsResponse.locations ?? [];
+    const locations: unknown[] = locationsResponse.locations ?? [];
     let locationIds: string[] = locations
+        .filter((location): location is { status: string; id: string } =>
+            typeof location === 'object' && location !== null &&
+            'status' in location && 'id' in location &&
+            typeof (location as any).status === 'string' &&
+            typeof (location as any).id === 'string'
+        )
         .filter(location => location.status === 'ACTIVE' && location.id)
         .map(location => location.id!);
 
@@ -91,17 +99,17 @@ export async function GET(request: Request) {
     const completedOrders = await fetchOrders(locationIds, ['COMPLETED']);
 
     // Merge orders and remove potential duplicates
-    const allOrdersMap = new Map<string, SquareOrder>();
+    const allOrdersMap = new Map<string, KDSOrder>();
     [...openOrders, ...completedOrders].forEach((order: SquareOrder) => {
-        allOrdersMap.set(order.id!, order);
+        allOrdersMap.set(order.id!, order as KDSOrder);
     });
-    const orders: SquareOrder[] = Array.from(allOrdersMap.values());
+    const orders: KDSOrder[] = Array.from(allOrdersMap.values());
 
     // Process all orders for additional properties
     orders.forEach((order) => {
-        (order as SquareOrder & { isRush?: boolean; isPaid?: boolean }).isRush = order.ticketName?.toLowerCase().includes('rush');
+        order.isRush = order.ticketName?.toLowerCase().includes('rush');
         console.log(`Processing order ${order.id}: State=${order.state}, Tenders=${JSON.stringify(order.tenders)}`);
-        (order as SquareOrder & { isRush?: boolean; isPaid?: boolean }).isPaid = order.tenders && order.tenders.length > 0;
+        order.isPaid = order.tenders && order.tenders.length > 0;
     });
 
     // Sort: rush first, then by createdAt desc
