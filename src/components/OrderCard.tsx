@@ -43,6 +43,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
   };
 
   const getHeaderColor = () => {
+    if (order.isPaid) return 'bg-green-600';
     if (order.isRush) return 'bg-purple-600';
     const sourceName = order.source?.name?.toLowerCase() || '';
     if (sourceName.includes('delivery') || sourceName.includes('online')) return 'bg-red-600';
@@ -65,7 +66,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] max-h-full shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
+        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] h-auto shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
         onClick={isPending ? onReopen : onCardClick}
     >
         <div className={`p-3 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>

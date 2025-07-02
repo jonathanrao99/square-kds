@@ -27,4 +27,5 @@ export interface Order {
   source?: {
     name: string;
   }
+  isPaid?: boolean;
 } 

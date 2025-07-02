@@ -1,83 +1,108 @@
 import { NextResponse } from 'next/server';
 import { SquareClient, SquareEnvironment } from 'square';
+import { Client as LegacyClient } from 'square/legacy';
 
 // Environment variable validation
 if (!process.env.SQUARE_ACCESS_TOKEN) {
     throw new Error("SQUARE_ACCESS_TOKEN is not set in the environment variables.");
 }
 
-// Initialize the Square client
+// Initialize the Square client (new) for locations
 const client = new SquareClient({
   token: process.env.SQUARE_ACCESS_TOKEN!,
   environment: process.env.SANDBOX === 'true' ? SquareEnvironment.Sandbox : SquareEnvironment.Production,
+});
+
+// Initialize the legacy client for orders
+const legacyClient = new LegacyClient({
+  bearerAuthCredentials: {
+    accessToken: process.env.SQUARE_ACCESS_TOKEN!,
+  },
 });
 
 export async function GET() {
   console.log("Fetching orders from Square API...");
   try {
     // Fetch locations to get location IDs for searching orders
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const locationsResponse: any = await (client.locations as any).listLocations();
+    console.log("Fetching locations...");
+    const locationsResponse = await client.locations.list();
     console.log("Locations response received.");
-
-    const locationIds = (locationsResponse.result.locations ?? [])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((l: any) => l.status === 'ACTIVE' && l.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((l: any) => l.id!);
+    const locations = locationsResponse.locations ?? [];
+    const locationIds: string[] = [];
+    for (const location of locations) {
+      if (location.status === 'ACTIVE' && location.id) {
+        locationIds.push(location.id);
+      }
+    }
     console.log("Found ACTIVE Location IDs:", locationIds);
-    
     if (locationIds.length === 0) {
         console.log("No location IDs found, returning empty orders array.");
         return NextResponse.json({ orders: [] });
     }
 
-    // Search orders across locations
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ordersResponse: any = await (client.orders as any).searchOrders({ 
-      body: {
-        locationIds,
-        query: {
-            filter: {
-                stateFilter: {
-                    states: ['OPEN'],
-                }
-            },
-            sort: {
-                sortField: 'CREATED_AT',
-                sortOrder: 'DESC'
-            }
-        }
-      }
+    // Fetch OPEN orders
+    const openOrdersResponse = await legacyClient.ordersApi.searchOrders({
+      locationIds,
+      query: {
+        filter: {
+          stateFilter: { states: ['OPEN'] },
+        },
+        sort: {
+          sortField: 'CREATED_AT',
+          sortOrder: 'DESC',
+        },
+      },
     });
-
-    // Convert BigInt and identify rush orders
-    const safeOrdersResponse = JSON.parse(
-      JSON.stringify(ordersResponse.result, (_, value) =>
+    const safeOpenOrders = JSON.parse(
+      JSON.stringify(openOrdersResponse.result, (_, value) =>
         typeof value === 'bigint' ? value.toString() : value
       )
     );
-    
-    const orders = safeOrdersResponse.orders ?? [];
-
-    // Manually add isRush flag and sort
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    orders.forEach((order: any) => {
-        order.isRush = order.ticketName?.toLowerCase().includes('rush');
+    let openOrders = safeOpenOrders.orders ?? [];
+    openOrders.forEach((order: any) => {
+      order.isRush = order.ticketName?.toLowerCase().includes('rush');
+      order.isPaid = false;
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Fetch COMPLETED orders (recently paid)
+    const completedOrdersResponse = await legacyClient.ordersApi.searchOrders({
+      locationIds,
+      query: {
+        filter: {
+          stateFilter: { states: ['COMPLETED'] },
+        },
+        sort: {
+          sortField: 'CREATED_AT',
+          sortOrder: 'DESC',
+        },
+      },
+    });
+    const safeCompletedOrders = JSON.parse(
+      JSON.stringify(completedOrdersResponse.result, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      )
+    );
+    let completedOrders = (safeCompletedOrders.orders ?? []).filter((order: any) => {
+      if (!order.completedAt) return false;
+      const completedAt = new Date(order.completedAt).getTime();
+      const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+      return completedAt >= twoHoursAgo;
+    });
+    completedOrders.forEach((order: any) => {
+      order.isRush = order.ticketName?.toLowerCase().includes('rush');
+      order.isPaid = true;
+    });
+
+    // Merge open and recently paid orders
+    const orders = [...openOrders, ...completedOrders];
+    // Sort: rush first, then by createdAt desc
     orders.sort((a: any, b: any) => {
-        if (a.isRush && !b.isRush) return -1;
-        if (!a.isRush && b.isRush) return 1;
-        return 0;
+      if (a.isRush && !b.isRush) return -1;
+      if (!a.isRush && b.isRush) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-    console.log("Raw orders response from Square:", JSON.stringify(safeOrdersResponse, null, 2));
-
-    // Ensure we always return an `orders` array for the frontend
     console.log("Final orders being sent to frontend:", JSON.stringify(orders, null, 2));
-
     return NextResponse.json({ orders }, {
         headers: {
             'Cache-Control': 'no-store',
