@@ -5,7 +5,7 @@ import { NextApiResponseServerIo } from "@/types";
 
 let io: ServerIO | undefined;
 
-export const getIo = (httpServer?: NetServer, req?: NextApiRequest, res?: NextApiResponseServerIo) => {
+export const getIo = (httpServer?: NetServer) => {
   if (!io) {
     if (!httpServer) {
       throw new Error("Socket.io server not initialized. Pass httpServer to getIo() on first call.");

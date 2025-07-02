@@ -78,8 +78,8 @@ export async function GET(request: Request) {
         .filter((location): location is { status: string; id: string } =>
             typeof location === 'object' && location !== null &&
             'status' in location && 'id' in location &&
-            typeof (location as any).status === 'string' &&
-            typeof (location as any).id === 'string'
+            typeof (location as { status?: unknown }).status === 'string' &&
+            typeof (location as { id?: unknown }).id === 'string'
         )
         .filter(location => location.status === 'ACTIVE' && location.id)
         .map(location => location.id!);
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
     const orders: KDSOrder[] = Array.from(allOrdersMap.values());
 
     // Process all orders for additional properties
-    orders.forEach((order) => {
+    orders.forEach((order: KDSOrder) => {
         order.isRush = order.ticketName?.toLowerCase().includes('rush');
         console.log(`Processing order ${order.id}: State=${order.state}, Tenders=${JSON.stringify(order.tenders)}`);
         order.isPaid = order.tenders && order.tenders.length > 0;
