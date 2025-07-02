@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { SearchOrdersRequest } from 'square/legacy';
 import { squareClient, legacySquareClient } from '@/lib/square';
-import { SquareOrder, SquareLocation } from '@/types';
+import { SquareOrder } from '@/types';
 
 // Safe stringify for BigInt serialization
 const safeStringify = (
@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     console.log("Fetching locations...");
     const locationsResponse = await squareClient.locations.list();
     console.log("Locations response received.");
-    const locations: SquareLocation[] = locationsResponse.locations ?? [];
+    const locations: any[] = locationsResponse.locations ?? [];
     let locationIds: string[] = locations
         .filter(location => location.status === 'ACTIVE' && location.id)
         .map(location => location.id!);
