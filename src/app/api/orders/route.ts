@@ -37,6 +37,24 @@ function getDateRange(range: string) {
   return { startAt: start.toISOString(), endAt: now.toISOString() };
 }
 
+// Helper to fetch all pages of orders
+async function fetchAllOrders(params: any, ordersApi: any) {
+  let allOrders: any[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const response = await ordersApi.searchOrders({ ...params, cursor });
+    const safeResponse = JSON.parse(
+      JSON.stringify(response, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      )
+    );
+    const orders = safeResponse.orders ?? [];
+    allOrders = allOrders.concat(orders);
+    cursor = safeResponse.cursor;
+  } while (cursor);
+  return allOrders;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const statusParam = searchParams.get('status') || 'OPEN';
@@ -60,23 +78,20 @@ export async function GET(req: Request) {
     let orders: Order[] = [];
 
     if (states.length === 1 && states[0] === 'OPEN') {
-      // Fetch OPEN orders from all locations
-      const openOrdersResponse = await ordersApi.searchOrders({
+      // Fetch all OPEN orders from all locations (with pagination)
+      const openOrders = await fetchAllOrders({
         locationIds,
         query: { filter: { stateFilter: { states: ['OPEN'] } } },
+        limit: 200,
+      }, ordersApi);
+      openOrders.forEach(order => {
+        console.log(`[OPEN] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
-      const safeOpenOrdersResponse = JSON.parse(
-        JSON.stringify(openOrdersResponse, (_, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      );
-      console.log('Raw OPEN orders response:', JSON.stringify(safeOpenOrdersResponse, null, 2));
-      const openOrders = safeOpenOrdersResponse.orders ?? [];
 
-      // Fetch recently paid (COMPLETED in last 24h) orders from all locations
+      // Fetch all recently paid (COMPLETED in last 24h) orders from all locations (with pagination)
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const completedOrdersResponse = await ordersApi.searchOrders({
+      const recentPaidOrders = await fetchAllOrders({
         locationIds,
         query: {
           filter: {
@@ -84,21 +99,18 @@ export async function GET(req: Request) {
             dateTimeFilter: { closedAt: { startAt: yesterday.toISOString(), endAt: now.toISOString() } },
           },
         },
+        limit: 200,
+      }, ordersApi);
+      recentPaidOrders.forEach(order => {
+        console.log(`[RECENT PAID] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
-      const safeCompletedOrdersResponse = JSON.parse(
-        JSON.stringify(completedOrdersResponse, (_, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      );
-      console.log('Raw RECENT PAID orders response:', JSON.stringify(safeCompletedOrdersResponse, null, 2));
-      const recentPaidOrders = safeCompletedOrdersResponse.orders ?? [];
 
       orders = [...openOrders, ...recentPaidOrders];
     } else if (states.length === 1 && states[0] === 'COMPLETED') {
-      // Only show completed orders older than 24 hours from all locations
+      // Only show completed orders older than 24 hours from all locations (with pagination)
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const completedOrdersResponse = await ordersApi.searchOrders({
+      orders = await fetchAllOrders({
         locationIds,
         query: {
           filter: {
@@ -106,14 +118,13 @@ export async function GET(req: Request) {
             dateTimeFilter: { closedAt: { endAt: yesterday.toISOString() } },
           },
         },
+        limit: 200,
+      }, ordersApi);
+      orders.forEach(order => {
+        console.log(`[COMPLETED] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
-      orders = JSON.parse(
-        JSON.stringify(completedOrdersResponse, (_, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      ).orders ?? [];
     } else {
-      // Fallback: use the original filter logic for other cases, but all locations
+      // Fallback: use the original filter logic for other cases, but all locations (with pagination)
       const filter: { stateFilter: { states: string[] }, dateTimeFilter?: { closedAt?: { startAt?: string, endAt?: string }, createdAt?: { startAt?: string, endAt?: string } } } = { stateFilter: { states } };
       if (dateRange) {
         if (states.includes('COMPLETED')) {
@@ -122,15 +133,14 @@ export async function GET(req: Request) {
           filter.dateTimeFilter = { createdAt: dateRange };
         }
       }
-      const ordersResponse = await ordersApi.searchOrders({
+      orders = await fetchAllOrders({
         locationIds,
         query: { filter },
+        limit: 200,
+      }, ordersApi);
+      orders.forEach(order => {
+        console.log(`[GENERIC] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
-      orders = JSON.parse(
-        JSON.stringify(ordersResponse, (_, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      ).orders ?? [];
     }
 
     // Manually add isRush flag and sort
