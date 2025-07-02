@@ -124,6 +124,15 @@ export async function GET(req: Request) {
         console.log(`[ALL] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
 
+      // Debug: Search for specific order ID from webhook
+      const webhookOrderId = 'hz79qON3ctXLm6YOVhmp0vdD7uDZY';
+      const webhookOrder = allOrders.find(order => order.id === webhookOrderId);
+      if (webhookOrder) {
+        console.log(`[DEBUG] Found webhook order:`, JSON.stringify(webhookOrder, null, 2));
+      } else {
+        console.log(`[DEBUG] Webhook order ${webhookOrderId} NOT FOUND in API response`);
+      }
+
       orders = [...draftOrders, ...openOrders, ...recentPaidOrders];
     } else if (states.length === 1 && states[0] === 'COMPLETED') {
       // Only show completed orders older than 24 hours from all locations (with pagination)
