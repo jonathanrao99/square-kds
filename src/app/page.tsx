@@ -108,10 +108,17 @@ export default function Home() {
   };
   
   const allOrders: Order[] = data?.orders ?? [];
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  
-  const openOrders = allOrders
-    .filter(o => !completedTickets.has(o.id) && new Date(o.createdAt) > oneHourAgo);
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+  // Open: all not completed, plus paid orders in last 2 hours (if not completed)
+  const openOrders = [
+    ...allOrders.filter(o => !completedTickets.has(o.id)),
+    ...allOrders.filter(o =>
+      o.isPaid &&
+      new Date(o.createdAt) > twoHoursAgo &&
+      !completedTickets.has(o.id)
+    )
+  ].filter((order, idx, arr) => arr.findIndex(o => o.id === order.id) === idx); // remove duplicates
 
   const completedOrders = allOrders.filter(o => completedTickets.has(o.id));
   const displayedOrders = tab === 'open' ? openOrders : completedOrders;
@@ -129,15 +136,6 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-black flex flex-col font-sans">
-      <div className="p-4 border-b border-gray-800">
-        <Header 
-          tab={tab}
-          setTab={setTab}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-        />
-      </div>
-      
       <div className="flex-grow flex flex-row overflow-hidden">
         <AllDayView 
             orders={openOrders} 

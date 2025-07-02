@@ -66,7 +66,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] h-auto shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
+        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] max-h-[calc(100vh-72px)] h-auto shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
         onClick={isPending ? onReopen : onCardClick}
     >
         <div className={`p-3 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
@@ -76,7 +76,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
               <span className="text-sm font-medium"><TimeAgo date={order.createdAt} /></span>
             </div>
         </div>
-        <div className="flex-grow overflow-y-auto">
+        <div className="overflow-y-auto">
             <ul className="p-4 space-y-3">
                 {order.lineItems.map(item => {
                     const itemCompleted = itemStatus[item.uid] === 'completed';

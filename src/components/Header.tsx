@@ -1,15 +1,23 @@
+'use client';
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
-interface HeaderProps {
-    tab: 'open' | 'completed';
-    setTab: (tab: 'open' | 'completed') => void;
-    onRefresh: () => void;
-    isRefreshing: boolean;
+interface NavLink {
+    href: string;
+    label: string;
 }
 
-export const Header = ({ tab, setTab, onRefresh, isRefreshing }: HeaderProps) => {
+interface HeaderProps {
+    tab?: 'open' | 'completed';
+    setTab?: (tab: 'open' | 'completed') => void;
+    onRefresh?: () => void;
+    isRefreshing?: boolean;
+    navLinks?: NavLink[];
+}
+
+export const Header = ({ tab, setTab, onRefresh, isRefreshing, navLinks = [] }: HeaderProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const dropdownVariants = {
@@ -18,10 +26,10 @@ export const Header = ({ tab, setTab, onRefresh, isRefreshing }: HeaderProps) =>
     };
 
     return (
-        <header className="flex items-center justify-between mb-6 text-white">
-            <div className="flex items-center space-x-4">
+        <header className="flex items-center justify-between mb-2 px-3 py-1 text-orange min-h-12">
+            <div className="flex items-center space-x-2">
                 <div className="relative">
-                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-3xl" aria-label="Menu">☰</button>
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-xl px-1" aria-label="Menu">☰</button>
                     <AnimatePresence>
                         {isMenuOpen && (
                             <motion.div
@@ -29,37 +37,38 @@ export const Header = ({ tab, setTab, onRefresh, isRefreshing }: HeaderProps) =>
                                 animate="visible"
                                 exit="hidden"
                                 variants={dropdownVariants}
-                                className="absolute top-12 left-0 bg-gray-800 rounded-lg shadow-2xl z-50 w-48 border border-gray-700"
+                                className="absolute top-10 left-0 bg-gray-800 rounded-lg shadow-2xl z-50 w-40 border border-gray-700"
                             >
-                                <ul className="p-2">
-                                    <li>
-                                        <Link href="/dashboard" className="block px-4 py-2 text-white rounded-md hover:bg-gray-700">Analytics</Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/settings" className="block px-4 py-2 text-white rounded-md hover:bg-gray-700">Settings</Link>
-                                    </li>
+                                <ul className="p-1">
+                                    {navLinks.map(link => (
+                                        <li key={link.href}>
+                                            <Link href={link.href} className="block px-3 py-1 text-white rounded-md hover:bg-gray-700 text-sm">{link.label}</Link>
+                                        </li>
+                                    ))}
                                 </ul>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
-                <button className="text-3xl" onClick={onRefresh} aria-label="Refresh Orders">
-                    <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }} transition={{ duration: 0.7 }}>⟳</motion.div>
-                </button>
+                {onRefresh && (
+                    <button className="text-xl px-1" onClick={onRefresh} aria-label="Refresh Orders">
+                        <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }} transition={{ duration: 0.7 }}>⟳</motion.div>
+                    </button>
+                )}
             </div>
-            <h1 className="text-3xl font-bold tracking-wider">Desi Flavors Katy KDS</h1>
-            <div className="flex items-center space-x-4">
-                <div className="flex space-x-2">
+            <h1 className="text-xl font-bold tracking-wider whitespace-nowrap">Desi Flavors Katy KDS</h1>
+            {tab && setTab ? (
+                <div className="flex items-center space-x-1">
                     <button
-                        className={`px-5 py-2 rounded-lg text-lg font-semibold transition-colors ${tab === 'open' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
+                        className={`px-3 py-1 rounded-lg text-base font-semibold transition-colors ${tab === 'open' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
                         onClick={() => setTab('open')}
                     >Open</button>
                     <button
-                        className={`px-5 py-2 rounded-lg text-lg font-semibold transition-colors ${tab === 'completed' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
+                        className={`px-3 py-1 rounded-lg text-base font-semibold transition-colors ${tab === 'completed' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
                         onClick={() => setTab('completed')}
                     >Completed</button>
                 </div>
-            </div>
+            ) : <div className="w-24" />}
         </header>
     );
 }; 
