@@ -8,11 +8,7 @@ interface AllDayViewProps {
     onClose: () => void;
 }
 
-interface AggregatedItem {
-    name: string;
-    quantity: number;
-    modifiers?: { name: string; quantity: number }[];
-}
+
 
 const getItemIdentifier = (item: LineItem) => {
     const sortedModifiers = item.modifiers?.map(m => m.name).sort().join(', ') || '';

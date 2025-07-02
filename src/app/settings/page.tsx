@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { SubPageNav } from '@/components/SubPageNav';
+
 import { SimpleNavbar } from '@/components/SimpleNavbar';
 
 export default function Settings() {

@@ -16,7 +16,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerSettings, setTimerSettings] = useState({ warningTime: 300, dangerTime: 600 });
 
-  const isPaid = order.state === 'OPEN' && Array.isArray((order as any).tenders) && (order as any).tenders.length > 0;
+  const isPaid = order.state === 'OPEN' && Array.isArray(order.tenders) && order.tenders.length > 0;
   const sourceLabel = order.source?.name ? order.source.name : null;
 
   useEffect(() => {
@@ -74,12 +74,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
     }));
   };
 
-  const getHeaderColor = () => {
-    if (order.isRush) return 'bg-purple-600';
-    const sourceName = order.source?.name?.toLowerCase() || '';
-    if (sourceName.includes('delivery') || sourceName.includes('online')) return 'bg-red-600';
-    return 'bg-blue-600';
-  }
+  
 
   const getTimerStyle = () => {
     if (isCompleted || isPending) {

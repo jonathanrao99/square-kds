@@ -6,7 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 
-import { Order, LineItem } from '@/types';
+import { Order } from '@/types';
 import { Header } from '@/components/Header';
 import { OrderGrid } from '@/components/OrderGrid';
 import { Modal } from '@/components/Modal';
@@ -18,7 +18,7 @@ const fetcher = async (url: string) => {
     if (!res.ok) {
         const errorDetails = await res.json();
         const error = new Error('An error occurred while fetching the data.');
-        (error as any).info = errorDetails;
+        (error as Error & { info?: object }).info = errorDetails;
         throw error;
     }
     return res.json();
@@ -34,7 +34,7 @@ export default function Home() {
   const [completedRange, setCompletedRange] = useState<'day' | 'week' | 'month'>('day');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   const [apiUrl, setApiUrl] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({});
 
@@ -102,7 +102,7 @@ export default function Home() {
     return () => {
       socket.disconnect();
     };
-  }, [tab, completedRange]);
+  }, [tab, completedRange, apiUrl]);
 
   const handleRefresh = () => {
     if(apiUrl) {
@@ -171,15 +171,13 @@ export default function Home() {
     setSelectedOrder(order);
   };
   
-  const { data, error, isLoading } = useSWR(apiUrl, fetcher, {
+  const { data, error } = useSWR(apiUrl, fetcher, {
     refreshInterval: tab === 'open' ? 30000 : 0, // 30 seconds for open, no auto-refresh for completed
   });
   
   const allOrders: Order[] = data?.orders ?? [];
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  
   const openOrders = allOrders
-    .filter(o => !completedTickets.has(o.id) && new Date(o.createdAt) > oneHourAgo);
+    .filter(o => !completedTickets.has(o.id));
 
   const completedOrders = allOrders.filter(o => completedTickets.has(o.id));
   
