@@ -12,7 +12,7 @@ interface OrderGridProps {
 }
 
 export const OrderGrid = ({ orders, onDone, onReopen, onCardClick, pendingCompletion, completedTickets }: OrderGridProps) => (
-    <div className="flex flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-4 bg-black">
+    <div className="flex flex-row items-start gap-4 overflow-x-auto overflow-y-hidden p-4 bg-[var(--background-dark)]">
         <AnimatePresence>
             {orders.map((order, idx) => (
                 <OrderCard

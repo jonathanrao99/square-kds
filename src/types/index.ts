@@ -1,6 +1,7 @@
 import { Server as NetServer, Socket } from "net";
 import { NextApiResponse } from "next";
 import { Server as SocketIOServer } from "socket.io";
+import { Order as SquareApiOrder, OrderLineItem, OrderSource, Location as SquareApiLocation, OrderTender } from 'square/legacy';
 
 export type NextApiResponseServerIo = NextApiResponse & {
   socket: Socket & {
@@ -9,6 +10,10 @@ export type NextApiResponseServerIo = NextApiResponse & {
     };
   };
 };
+
+// Square API specific types
+export interface SquareOrder extends SquareApiOrder {}
+export interface SquareLocation extends SquareApiLocation {}
 
 export interface LineItem {
   uid: string;
@@ -25,7 +30,11 @@ export interface Order {
   isRush?: boolean;
   completedAt?: string;
   source?: {
-    name: string;
+    name?: string;
   }
   isPaid?: boolean;
+  // Add other properties from SquareApiOrder that you might use directly
+  locationId?: string;
+  version?: bigint;
+  tenders?: OrderTender[];
 } 

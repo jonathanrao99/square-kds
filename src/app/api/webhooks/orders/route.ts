@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getIo } from '@/lib/socket-server';
+import { createHmac } from 'crypto';
 
 // You will need to set this environment variable in your .env.local file
 const SQUARE_WEBHOOK_SECRET = process.env.SQUARE_WEBHOOK_SECRET;
@@ -18,15 +19,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
   }
 
-  // TODO: Implement actual Square webhook signature verification here.
-  // This is a placeholder. You'll need to use Square's SDK or a crypto library
-  // to verify the signature against the rawBody and SQUARE_WEBHOOK_SECRET.
-  // For example, using Square's Node.js SDK:
-  // const isValid = await new WebhookHelper(SQUARE_WEBHOOK_SECRET).verify(rawBody, signature);
-  // if (!isValid) {
-  //   console.warn('Invalid webhook signature.');
-  //   return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
-  // }
+  // Verify webhook signature
+  const hmac = createHmac('sha1', SQUARE_WEBHOOK_SECRET);
+  hmac.update(rawBody);
+  const expectedSignature = hmac.digest('base64');
+
+  if (signature !== expectedSignature) {
+    console.warn('Invalid webhook signature.');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+  }
 
   try {
     const body = JSON.parse(rawBody);

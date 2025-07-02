@@ -5,9 +5,9 @@ export const SubPageNav = () => (
     <motion.nav 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-8 text-white"
+        className="flex items-center justify-between mb-8 text-[var(--text-primary)]"
     >
-        <Link href="/" className="flex items-center space-x-2 text-lg hover:text-gray-300">
+        <Link href="/" className="flex items-center space-x-2 text-lg hover:text-[var(--text-secondary)]">
             <span className="text-2xl">&larr;</span>
             <span>Back to KDS</span>
         </Link>

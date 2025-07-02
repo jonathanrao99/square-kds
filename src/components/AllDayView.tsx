@@ -35,25 +35,25 @@ export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
             initial={false}
             animate={{ width: isOpen ? 300 : 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-            className="h-full bg-gray-900 border-r border-gray-800 overflow-hidden shrink-0"
+            className="h-full bg-[var(--background-light)] border-r border-[var(--border-color)] overflow-hidden shrink-0"
         >
             <div className="p-4 h-full w-[300px]">
                 <div className="flex items-center mb-6">
-                    <button onClick={onClose} className="text-2xl text-white p-2 hover:bg-gray-700 rounded-full mr-2">
+                    <button onClick={onClose} className="text-2xl text-[var(--text-primary)] p-2 hover:bg-[var(--background-dark)] rounded-full mr-2">
                         &lt;
                     </button>
-                    <h2 className="text-2xl font-bold text-white">All Day</h2>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)]">All Day</h2>
                 </div>
-                <ul className="space-y-2 text-white overflow-y-auto h-[calc(100%-4rem)]">
+                <ul className="space-y-2 text-[var(--text-primary)] overflow-y-auto h-[calc(100%-4rem)]">
                     {aggregatedItems.map(item => (
                         <motion.li 
                             key={item.name}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="flex justify-between items-center text-md bg-gray-800 p-3 rounded-md hover:bg-gray-700/50 transition-colors"
+                            className="flex justify-between items-center text-md bg-[var(--background-dark)] p-3 rounded-md hover:bg-[var(--background-dark)]/50 transition-colors"
                         >
                             <span className="font-semibold truncate pr-4">{item.name}</span>
-                            <span className="font-bold text-lg bg-gray-700 w-8 h-8 flex items-center justify-center rounded-full">{item.quantity}</span>
+                            <span className="font-bold text-lg bg-[var(--accent-orange)] w-8 h-8 flex items-center justify-center rounded-full">{item.quantity}</span>
                         </motion.li>
                     ))}
                 </ul>

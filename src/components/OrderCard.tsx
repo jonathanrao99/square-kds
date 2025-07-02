@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { TimeAgo } from './TimeAgo';
+import { useOrderItemStatus } from '@/hooks/useOrderItemStatus';
 
 interface OrderCardProps {
   order: Order;
@@ -13,34 +13,7 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isCompleted }: OrderCardProps) {
-  const [itemStatus, setItemStatus] = useState<Record<string, 'pending' | 'completed'>>({});
-
-  useEffect(() => {
-    if (isCompleted) {
-      // Mark all items as completed when the order is completed
-      const allCompleted: Record<string, 'pending' | 'completed'> = {};
-      (order.lineItems || []).forEach(item => {
-        allCompleted[item.uid] = 'completed';
-      });
-      setItemStatus(allCompleted);
-    } else {
-      // Initialize all items as pending for open orders
-      const allPending: Record<string, 'pending' | 'completed'> = {};
-      (order.lineItems || []).forEach(item => {
-        allPending[item.uid] = 'pending';
-      });
-      setItemStatus(allPending);
-    }
-  }, [order.lineItems, isCompleted]);
-
-  const toggleItemStatus = (itemId: string) => {
-    if (isCompleted || isPending) return; // Don't allow changes if order is completed or pending
-    
-    setItemStatus(prev => ({
-      ...prev,
-      [itemId]: prev[itemId] === 'completed' ? 'pending' : 'completed'
-    }));
-  };
+  const { itemStatus, toggleItemStatus } = useOrderItemStatus(order.lineItems, isCompleted);
 
   const getHeaderColor = () => {
     if (order.isPaid) return 'bg-green-600'; // Paid orders: green header
@@ -66,28 +39,28 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className={`rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] shrink-0 flex flex-col max-h-screen ${order.isRush ? 'border-purple-500 border-2' : ''}`}
+        className={`rounded-lg shadow-2xl bg-[var(--background-light)] text-[var(--text-primary)] border border-[var(--border-color)] w-[360px] shrink-0 flex flex-col max-h-screen ${order.isRush ? 'border-[var(--accent-orange)] border-2' : ''}`}
         onClick={isPending ? onReopen : onCardClick}
     >
         {/* Fixed Header */}
         <div className={`p-4 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
             <h3 className="font-bold text-2xl">{displayName}</h3>
             <div className='flex flex-col items-end'>
-              {order.isRush && <span className="text-xs font-bold bg-white text-purple-600 px-2 py-1 rounded-full mb-1 animate-pulse">RUSH</span>}
-              <span className="text-lg font-medium"><TimeAgo date={order.createdAt} /></span>
+              {order.isRush && <span className="text-xs font-bold bg-[var(--accent-orange)] text-white px-2 py-1 rounded-full mb-1 animate-pulse">RUSH</span>}
+              <span className="text-sm font-medium"><TimeAgo date={order.createdAt} /></span>
             </div>
         </div>
         
         {/* Content Area */}
         <div className="p-4 flex flex-col flex-1 min-h-0">
             <ul className="space-y-3 overflow-y-auto">
-                {(order.lineItems || []).map(item => {
+                {order.lineItems.map(item => {
                     const itemCompleted = itemStatus[item.uid] === 'completed';
                     return (
                         <li 
                             key={item.uid} 
-                            className={`flex items-center text-2xl cursor-pointer hover:bg-gray-800 p-2 rounded transition-colors ${
-                                itemCompleted ? 'line-through text-gray-500' : ''
+                            className={`flex items-center text-2xl cursor-pointer hover:bg-[var(--background-dark)] p-2 rounded transition-colors ${
+                                itemCompleted ? 'line-through text-[var(--text-secondary)]' : ''
                             }`}
                             onClick={() => toggleItemStatus(item.uid)}
                         >
@@ -101,13 +74,13 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
             {/* Done Button */}
             <div className="mt-4 shrink-0">
                 {isCompleted ? (
-                    <div className="w-full bg-green-600 text-white font-bold py-2 rounded-md text-center cursor-not-allowed">
+                    <div className="w-full bg-[var(--green-color)] text-white font-bold py-2 rounded-md text-center cursor-not-allowed">
                         Completed
                     </div>
                 ) : (
                     <button
                         onClick={!isPending ? onDone : undefined}
-                        className="text-green-400 font-semibold text-center w-full hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                        className="text-[var(--accent-orange)] font-semibold text-center w-full hover:text-[var(--accent-orange-dark)] transition-colors disabled:opacity-50 disabled:cursor-wait"
                         disabled={isPending}
                     >
                         {isPending ? 'Completing...' : 'Done'}

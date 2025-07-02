@@ -5,8 +5,8 @@ export async function POST(request: Request) {
   try {
     const { orderId } = await request.json();
 
-    if (!orderId) {
-      return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+    if (typeof orderId !== 'string' || orderId.trim() === '') {
+      return NextResponse.json({ error: 'Invalid Order ID provided' }, { status: 400 });
     }
 
     console.log(`Attempting to complete order: ${orderId}`);

@@ -172,10 +172,10 @@ export default function Home() {
     prevOrderCount.current = openOrders.length;
   }, [openOrders.length, soundEnabled]);
 
-  if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
+  if (error) return <div className="min-h-screen bg-[var(--background-dark)] p-4 text-[var(--text-primary)] text-center">Failed to load orders. Please try again.</div>;
 
   return (
-    <div className="h-screen bg-black flex flex-col font-sans">
+    <div className="h-screen bg-[var(--background-dark)] flex flex-col font-sans">
       <Header 
         tab={tab}
         setTab={setTab}

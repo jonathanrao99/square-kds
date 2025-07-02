@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { squareClient } from '@/lib/square';
+import { SquareLocation } from '@/types';
 
 export async function GET() {
   try {
     console.log("Fetching locations from Square API...");
     const locationsResponse = await squareClient.locations.list();
-    const locations = locationsResponse.locations ?? [];
+    const locations: SquareLocation[] = locationsResponse.locations ?? [];
 
     const activeLocations = locations
       .filter(location => location.status === 'ACTIVE' && location.id)
       .map(location => ({
-        id: location.id,
+        id: location.id!,
         name: location.name || `Location ${location.id}`,
       }));
 

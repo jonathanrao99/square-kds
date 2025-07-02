@@ -26,7 +26,7 @@ export const Header = ({ tab, setTab, onRefresh, isRefreshing, navLinks = [] }: 
     };
 
     return (
-        <header className="flex items-center justify-between mb-2 px-3 py-3 text-orange min-h-20">
+        <header className="flex items-center justify-between mb-2 px-3 py-3 text-[var(--accent-orange)] min-h-20">
             <div className="flex items-center space-x-2">
                 <div className="relative">
                     <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-2xl px-2" aria-label="Menu">☰</button>
@@ -37,12 +37,12 @@ export const Header = ({ tab, setTab, onRefresh, isRefreshing, navLinks = [] }: 
                                 animate="visible"
                                 exit="hidden"
                                 variants={dropdownVariants}
-                                className="absolute top-12 left-0 bg-gray-800 rounded-lg shadow-2xl z-50 w-48 border border-gray-700"
+                                className="absolute top-12 left-0 bg-[var(--background-light)] rounded-lg shadow-2xl z-50 w-48 border border-[var(--border-color)]"
                             >
                                 <ul className="p-2">
                                     {navLinks.map(link => (
                                         <li key={link.href}>
-                                            <Link href={link.href} className="block px-4 py-2 text-white rounded-md hover:bg-gray-700 text-lg">{link.label}</Link>
+                                            <Link href={link.href} className="block px-4 py-2 text-[var(--text-primary)] rounded-md hover:bg-[var(--background-dark)] text-lg">{link.label}</Link>
                                         </li>
                                     ))}
                                 </ul>
@@ -60,11 +60,11 @@ export const Header = ({ tab, setTab, onRefresh, isRefreshing, navLinks = [] }: 
             {tab && setTab ? (
                 <div className="flex items-center space-x-2">
                     <button
-                        className={`px-6 py-3 rounded-lg text-xl font-semibold transition-colors ${tab === 'open' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
+                        className={`px-6 py-3 rounded-lg text-xl font-semibold transition-colors ${tab === 'open' ? 'bg-[var(--accent-orange)] text-white' : 'bg-[var(--background-light)] hover:bg-[var(--background-dark)] text-[var(--text-primary)]'}`}
                         onClick={() => setTab('open')}
                     >Open</button>
                     <button
-                        className={`px-6 py-3 rounded-lg text-xl font-semibold transition-colors ${tab === 'completed' ? 'bg-white text-black' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}
+                        className={`px-6 py-3 rounded-lg text-xl font-semibold transition-colors ${tab === 'completed' ? 'bg-[var(--accent-orange)] text-white' : 'bg-[var(--background-light)] hover:bg-[var(--background-dark)] text-[var(--text-primary)]'}`}
                         onClick={() => setTab('completed')}
                     >Completed</button>
                 </div>
