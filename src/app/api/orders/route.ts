@@ -38,8 +38,8 @@ function getDateRange(range: string) {
 }
 
 // Helper to fetch all pages of orders
-async function fetchAllOrders(params: any, ordersApi: any) {
-  let allOrders: any[] = [];
+async function fetchAllOrders(params: Record<string, unknown>, ordersApi: { searchOrders: (args: Record<string, unknown>) => Promise<unknown> }): Promise<Order[]> {
+  let allOrders: Order[] = [];
   let cursor: string | undefined = undefined;
   do {
     const response = await ordersApi.searchOrders({ ...params, cursor });
@@ -48,7 +48,7 @@ async function fetchAllOrders(params: any, ordersApi: any) {
         typeof value === 'bigint' ? value.toString() : value
       )
     );
-    const orders = safeResponse.orders ?? [];
+    const orders: Order[] = safeResponse.orders ?? [];
     allOrders = allOrders.concat(orders);
     cursor = safeResponse.cursor;
   } while (cursor);
@@ -78,6 +78,16 @@ export async function GET(req: Request) {
     let orders: Order[] = [];
 
     if (states.length === 1 && states[0] === 'OPEN') {
+      // Fetch all DRAFT orders from all locations (with pagination)
+      const draftOrders = await fetchAllOrders({
+        locationIds,
+        query: { filter: { stateFilter: { states: ['DRAFT'] } } },
+        limit: 200,
+      }, ordersApi);
+      draftOrders.forEach(order => {
+        console.log(`[DRAFT] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
+      });
+
       // Fetch all OPEN orders from all locations (with pagination)
       const openOrders = await fetchAllOrders({
         locationIds,
@@ -105,7 +115,16 @@ export async function GET(req: Request) {
         console.log(`[RECENT PAID] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
       });
 
-      orders = [...openOrders, ...recentPaidOrders];
+      // For debugging: fetch all orders (no state filter)
+      const allOrders = await fetchAllOrders({
+        locationIds,
+        limit: 200,
+      }, ordersApi);
+      allOrders.forEach(order => {
+        console.log(`[ALL] Order ID: ${order.id}, Ticket: ${order.ticketName}, State: ${order.state}`);
+      });
+
+      orders = [...draftOrders, ...openOrders, ...recentPaidOrders];
     } else if (states.length === 1 && states[0] === 'COMPLETED') {
       // Only show completed orders older than 24 hours from all locations (with pagination)
       const now = new Date();
