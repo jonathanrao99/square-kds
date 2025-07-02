@@ -19,14 +19,14 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
     if (isCompleted) {
       // Mark all items as completed when the order is completed
       const allCompleted: Record<string, 'pending' | 'completed'> = {};
-      order.lineItems.forEach(item => {
+      (order.lineItems || []).forEach(item => {
         allCompleted[item.uid] = 'completed';
       });
       setItemStatus(allCompleted);
     } else {
       // Initialize all items as pending for open orders
       const allPending: Record<string, 'pending' | 'completed'> = {};
-      order.lineItems.forEach(item => {
+      (order.lineItems || []).forEach(item => {
         allPending[item.uid] = 'pending';
       });
       setItemStatus(allPending);
@@ -43,7 +43,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
   };
 
   const getHeaderColor = () => {
-    if (order.isPaid) return 'bg-green-600';
+    if (order.isPaid) return 'bg-green-600'; // Paid orders: green header
     if (order.isRush) return 'bg-purple-600';
     const sourceName = order.source?.name?.toLowerCase() || '';
     if (sourceName.includes('delivery') || sourceName.includes('online')) return 'bg-red-600';
@@ -66,24 +66,27 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         animate={isPending ? "pending" : "animate"}
         exit="exit"
         layout
-        className={`flex flex-col rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] max-h-[calc(100vh-72px)] h-auto shrink-0 ${order.isRush ? 'border-purple-500 border-2' : ''}`}
+        className={`rounded-lg shadow-2xl bg-gray-900 text-white border border-gray-700/50 w-[360px] shrink-0 flex flex-col max-h-screen ${order.isRush ? 'border-purple-500 border-2' : ''}`}
         onClick={isPending ? onReopen : onCardClick}
     >
-        <div className={`p-3 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
+        {/* Fixed Header */}
+        <div className={`p-4 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
             <h3 className="font-bold text-2xl">{displayName}</h3>
             <div className='flex flex-col items-end'>
               {order.isRush && <span className="text-xs font-bold bg-white text-purple-600 px-2 py-1 rounded-full mb-1 animate-pulse">RUSH</span>}
-              <span className="text-sm font-medium"><TimeAgo date={order.createdAt} /></span>
+              <span className="text-lg font-medium"><TimeAgo date={order.createdAt} /></span>
             </div>
         </div>
-        <div className="overflow-y-auto">
-            <ul className="p-4 space-y-3">
-                {order.lineItems.map(item => {
+        
+        {/* Content Area */}
+        <div className="p-4 flex flex-col flex-1 min-h-0">
+            <ul className="space-y-3 overflow-y-auto">
+                {(order.lineItems || []).map(item => {
                     const itemCompleted = itemStatus[item.uid] === 'completed';
                     return (
                         <li 
                             key={item.uid} 
-                            className={`flex items-center text-lg cursor-pointer hover:bg-gray-800 p-2 rounded transition-colors ${
+                            className={`flex items-center text-2xl cursor-pointer hover:bg-gray-800 p-2 rounded transition-colors ${
                                 itemCompleted ? 'line-through text-gray-500' : ''
                             }`}
                             onClick={() => toggleItemStatus(item.uid)}
@@ -94,7 +97,9 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
                     );
                 })}
             </ul>
-            <div className="p-4 mt-auto">
+            
+            {/* Done Button */}
+            <div className="mt-4 shrink-0">
                 {isCompleted ? (
                     <div className="w-full bg-green-600 text-white font-bold py-2 rounded-md text-center cursor-not-allowed">
                         Completed
@@ -112,4 +117,4 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         </div>
     </motion.div>
   );
-} 
+}

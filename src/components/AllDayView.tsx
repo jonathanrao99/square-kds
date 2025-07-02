@@ -17,7 +17,7 @@ export const AllDayView = ({ orders, isOpen, onClose }: AllDayViewProps) => {
     const aggregatedItems = useMemo<AggregatedItem[]>(() => {
         const itemMap = new Map<string, number>();
         orders.forEach(order => {
-            order.lineItems.forEach(item => {
+            (order.lineItems || []).forEach(item => {
                 const name = item.name || 'Unknown Item';
                 const currentQuantity = itemMap.get(name) || 0;
                 itemMap.set(name, currentQuantity + Number(item.quantity));

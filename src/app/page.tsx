@@ -17,7 +17,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function Home() {
   const [tab, setTab] = useState<'open' | 'completed'>('open');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
-  const { data, error } = useSWR('/api/orders', fetcher);
+  const { data, error } = useSWR('/api/orders', fetcher, { refreshInterval: 5000 });
   
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
   const [pendingCompletion, setPendingCompletion] = useState<Map<string, NodeJS.Timeout>>(new Map());
@@ -110,15 +110,8 @@ export default function Home() {
   const allOrders: Order[] = data?.orders ?? [];
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-  // Open: all not completed, plus paid orders in last 2 hours (if not completed)
-  const openOrders = [
-    ...allOrders.filter(o => !completedTickets.has(o.id)),
-    ...allOrders.filter(o =>
-      o.isPaid &&
-      new Date(o.createdAt) > twoHoursAgo &&
-      !completedTickets.has(o.id)
-    )
-  ].filter((order, idx, arr) => arr.findIndex(o => o.id === order.id) === idx); // remove duplicates
+  // Open: all not completed and created within the last 2 hours
+  const openOrders = allOrders.filter(o => !completedTickets.has(o.id) && new Date(o.createdAt) > twoHoursAgo);
 
   const completedOrders = allOrders.filter(o => completedTickets.has(o.id));
   const displayedOrders = tab === 'open' ? openOrders : completedOrders;
@@ -136,6 +129,16 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-black flex flex-col font-sans">
+      <Header 
+        tab={tab}
+        setTab={setTab}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        navLinks={[
+          { href: "/dashboard", label: "Analytics" },
+          { href: "/settings", label: "Settings" },
+        ]}
+      />
       <div className="flex-grow flex flex-row overflow-hidden">
         <AllDayView 
             orders={openOrders} 
@@ -170,24 +173,6 @@ export default function Home() {
 
       <AnimatePresence>
           {modal.isOpen && <Modal onConfirm={modal.onConfirm} onCancel={closeModal}>{modal.content}</Modal>}
-          {selectedOrder && (
-            <Modal onCancel={closeModal} onConfirm={closeModal}>
-              <div className="p-4 text-white">
-                <h2 className="text-2xl font-bold mb-4">Order Details</h2>
-                <p><strong>ID:</strong> {selectedOrder.id}</p>
-                <p><strong>Ticket Name:</strong> {selectedOrder.ticketName}</p>
-                <p><strong>Created At:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
-                <p><strong>Source:</strong> {selectedOrder.source?.name}</p>
-                <p><strong>Rush Order:</strong> {selectedOrder.isRush ? 'Yes' : 'No'}</p>
-                <h3 className="text-xl font-bold mt-4 mb-2">Items</h3>
-                <ul>
-                  {selectedOrder.lineItems.map(item => (
-                    <li key={item.uid}>{item.quantity} x {item.name}</li>
-                  ))}
-                </ul>
-              </div>
-            </Modal>
-          )}
       </AnimatePresence>
     </div>
   );
