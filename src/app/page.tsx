@@ -89,27 +89,47 @@ export default function Home() {
   };
 
   const handleDoneClick = (orderId: string) => {
-    openModal(<p>Mark ticket as done?</p>, () => {
+    openModal(<p>Mark ticket as done?</p>, async () => {
       closeModal();
-      const timer = setTimeout(() => {
-          const orderToComplete = allOrders.find(o => o.id === orderId);
-          if (orderToComplete) {
-            const completedOrder = { ...orderToComplete, completedAt: new Date().toISOString() };
-            
-            const storedData = localStorage.getItem('sessionCompletedOrders');
-            const existingCompleted = storedData ? JSON.parse(storedData) : [];
-            localStorage.setItem('sessionCompletedOrders', JSON.stringify([...existingCompleted, completedOrder]));
+      setPendingCompletion(prev => new Map(prev).set(orderId, setTimeout(() => {}, 15000))); // Set a dummy timeout for visual pending state
 
-            setCompletedTickets(prev => new Set(prev).add(orderId));
-          }
-          
-          setPendingCompletion(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(orderId);
-              return newMap;
-          });
-      }, 15000);
-      setPendingCompletion(prev => new Map(prev).set(orderId, timer));
+      try {
+        const response = await fetch('/api/orders/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ orderId }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Order completion successful:', result);
+        
+        // Clear the pending state and mark as completed locally
+        setPendingCompletion(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(orderId);
+            return newMap;
+        });
+        setCompletedTickets(prev => new Set(prev).add(orderId));
+
+        // Revalidate SWR cache to update the UI
+        mutate('/api/orders');
+
+      } catch (error) {
+        console.error('Error completing order:', error);
+        // Revert pending state if API call fails
+        setPendingCompletion(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(orderId);
+            return newMap;
+        });
+        alert('Failed to complete order. Please try again.');
+      }
     });
   };
 

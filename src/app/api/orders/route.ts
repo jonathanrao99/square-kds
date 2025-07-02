@@ -7,7 +7,7 @@ const safeStringify = (obj: any, ...args: any[]) =>
     JSON.stringify(obj, (_, value) => typeof value === 'bigint' ? value.toString() : value, ...args);
 
 async function fetchOrders(locationIds: string[], states: string[]): Promise<any[]> {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).getTime();
+    const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
     const query: SearchOrdersRequest = {
         locationIds,
         query: {
@@ -37,7 +37,7 @@ async function fetchOrders(locationIds: string[], states: string[]): Promise<any
         orders = orders.filter((order: any) => {
             if (!order.createdAt) return false;
             const createdAt = new Date(order.createdAt).getTime();
-            return createdAt >= twoHoursAgo;
+            return createdAt >= new Date(eightHoursAgo).getTime();
         });
         console.log(`OPEN orders after 2-hour filter (from ${initialOpenCount} to ${orders.length}):`, safeStringify(orders, null, 2));
     }

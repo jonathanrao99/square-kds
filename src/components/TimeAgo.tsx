@@ -19,8 +19,10 @@ export function TimeAgo({ date }: { date: string }) {
     }
 
     let timeDisplay;
-    if (seconds < 60) {
+    if (seconds < 10) {
         timeDisplay = 'just now';
+    } else if (minutes < 1) {
+        timeDisplay = `${seconds}s ago`;
     } else if (minutes < 60) {
         timeDisplay = `${minutes}m ago`;
     } else {
