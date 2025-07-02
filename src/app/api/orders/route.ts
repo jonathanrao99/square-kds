@@ -1,28 +1,10 @@
 import { NextResponse } from 'next/server';
-import { SquareClient, SquareEnvironment } from 'square';
-import { Client as LegacyClient, Order as SquareOrder, SearchOrdersRequest } from 'square/legacy';
+import { SearchOrdersRequest } from 'square/legacy';
+import { squareClient, legacySquareClient } from '@/lib/square';
 
 // Safe stringify for BigInt serialization
 const safeStringify = (obj: any, ...args: any[]) =>
     JSON.stringify(obj, (_, value) => typeof value === 'bigint' ? value.toString() : value, ...args);
-
-// Environment variable validation
-if (!process.env.SQUARE_ACCESS_TOKEN) {
-    throw new Error("SQUARE_ACCESS_TOKEN is not set in the environment variables.");
-}
-
-// Initialize the Square client (new) for locations
-const client = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN!,
-  environment: process.env.SANDBOX === 'true' ? SquareEnvironment.Sandbox : SquareEnvironment.Production,
-});
-
-// Initialize the legacy client for orders
-const legacyClient = new LegacyClient({
-  bearerAuthCredentials: {
-    accessToken: process.env.SQUARE_ACCESS_TOKEN!,
-  },
-});
 
 async function fetchOrders(locationIds: string[], states: string[]): Promise<any[]> {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).getTime();
@@ -40,7 +22,7 @@ async function fetchOrders(locationIds: string[], states: string[]): Promise<any
     };
 
     console.log(`Searching for orders with states: ${states.join(', ')} and query:`, safeStringify(query, null, 2));
-    const response = await legacyClient.ordersApi.searchOrders(query);
+    const response = await legacySquareClient.ordersApi.searchOrders(query);
     console.log(`Raw response for states ${states.join(', ')}:`, safeStringify(response.result, null, 2));
 
     const safeOrders = JSON.parse(
@@ -71,19 +53,25 @@ async function fetchOrders(locationIds: string[], states: string[]): Promise<any
     return orders;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   console.log("Fetching orders from Square API...");
   try {
-    // Fetch locations to get location IDs for searching orders
+    const { searchParams } = new URL(request.url);
+    const locationIdFilter = searchParams.get('locationId');
+
     console.log("Fetching locations...");
-    const locationsResponse = await client.locations.list();
+    const locationsResponse = await squareClient.locations.list();
     console.log("Locations response received.");
     const locations = locationsResponse.locations ?? [];
-    const locationIds: string[] = locations
+    let locationIds: string[] = locations
         .filter(location => location.status === 'ACTIVE' && location.id)
         .map(location => location.id!);
 
-    console.log("Found ACTIVE Location IDs:", locationIds);
+    if (locationIdFilter && locationIdFilter !== 'all') {
+        locationIds = locationIds.filter(id => id === locationIdFilter);
+    }
+
+    console.log("Found ACTIVE Location IDs (after filter):", locationIds);
     if (locationIds.length === 0) {
         console.log("No location IDs found, returning empty orders array.");
         return NextResponse.json({ orders: [] });
@@ -122,6 +110,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
-    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch orders', details: error instanceof Error ? error.message : 'An unknown error occurred' }, { status: 500 });
   }
 } 

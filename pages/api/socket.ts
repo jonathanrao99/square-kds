@@ -1,7 +1,6 @@
-import { Server as NetServer } from "http";
 import { NextApiRequest } from "next";
-import { Server as ServerIO } from "socket.io";
 import { NextApiResponseServerIo } from "@/types";
+import { getIo } from "@/lib/socket-server";
 
 export const config = {
   api: {
@@ -9,19 +8,12 @@ export const config = {
   },
 };
 
-const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
+export default function Socket(req: NextApiRequest, res: NextApiResponseServerIo) {
   if (!res.socket.server.io) {
-    console.log("*First use, starting socket.io");
-
-    const httpServer = res.socket.server as unknown as NetServer;
-    const io = new ServerIO(httpServer, {
-      path: "/api/socket",
-      addTrailingSlash: false,
-    });
-
+    console.log("New Socket.io server...");
+    const httpServer = res.socket.server as any;
+    const io = getIo(httpServer);
     res.socket.server.io = io;
   }
   res.end();
-};
-
-export default ioHandler; 
+}

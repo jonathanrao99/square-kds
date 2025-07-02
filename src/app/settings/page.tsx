@@ -1,10 +1,47 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SubPageNav } from '@/components/SubPageNav';
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Settings() {
   const [theme, setTheme] = useState('dark');
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [refreshInterval, setRefreshInterval] = useState(0); // 0 for webhook-driven, >0 for polling
+
+  const { data: locationsData, error: locationsError } = useSWR('/api/locations', fetcher);
+  const locations = locationsData?.locations || [];
+
+  useEffect(() => {
+    // Load settings from localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+    const savedSoundEnabled = localStorage.getItem('soundEnabled');
+    if (savedSoundEnabled !== null) {
+      setSoundEnabled(JSON.parse(savedSoundEnabled));
+    }
+    const savedLocation = localStorage.getItem('selectedLocation');
+    if (savedLocation) {
+      setSelectedLocation(savedLocation);
+    }
+    const savedRefreshInterval = localStorage.getItem('refreshInterval');
+    if (savedRefreshInterval) {
+      setRefreshInterval(parseInt(savedRefreshInterval));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save settings to localStorage whenever they change
+    localStorage.setItem('theme', theme);
+    localStorage.setItem('soundEnabled', JSON.stringify(soundEnabled));
+    localStorage.setItem('selectedLocation', selectedLocation);
+    localStorage.setItem('refreshInterval', refreshInterval.toString());
+  }, [theme, soundEnabled, selectedLocation, refreshInterval]);
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}>
@@ -34,19 +71,46 @@ export default function Settings() {
           {/* Sound Notification Settings */}
           <div className="p-6 bg-gray-800 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Sound Notifications</h2>
-            <p className="text-gray-400">Placeholder for sound settings.</p>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="toggle toggle-lg" // Assuming you have a Tailwind CSS toggle component or similar styling
+                checked={soundEnabled}
+                onChange={() => setSoundEnabled(!soundEnabled)}
+              />
+              <span className="text-lg">Enable Sounds</span>
+            </label>
+            <p className="text-gray-400 mt-2">Further sound customization options can go here.</p>
           </div>
 
           {/* Location Filtering Settings */}
           <div className="p-6 bg-gray-800 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Location Filtering</h2>
-            <p className="text-gray-400">Placeholder for location filtering.</p>
+            <select 
+              className="p-2 rounded-md bg-gray-700 text-white"
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+            >
+              <option value="all">All Locations</option>
+              {locations.map((loc: { id: string; name: string }) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+            {locationsError && <p className="text-red-500 text-sm mt-2">Error loading locations.</p>}
+            <p className="text-gray-400 mt-2">Filter orders by specific Square locations.</p>
           </div>
 
           {/* Refresh Interval Settings */}
           <div className="p-6 bg-gray-800 rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Refresh Interval</h2>
-            <p className="text-gray-400">Placeholder for refresh interval settings.</p>
+            <input 
+              type="number" 
+              className="p-2 rounded-md bg-gray-700 text-white w-24"
+              value={refreshInterval}
+              onChange={(e) => setRefreshInterval(parseInt(e.target.value))}
+              min="0"
+            /> seconds (0 for webhook-driven)
+            <p className="text-gray-400 mt-2">Set how often the order list refreshes. 0 means updates are driven by webhooks.</p>
           </div>
         </div>
       </main>

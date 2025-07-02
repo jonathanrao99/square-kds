@@ -10,6 +10,7 @@ import { Header } from '@/components/Header';
 import { OrderGrid } from '@/components/OrderGrid';
 import { Modal } from '@/components/Modal';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { AllDayView } from '@/components/AllDayView';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -17,7 +18,31 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function Home() {
   const [tab, setTab] = useState<'open' | 'completed'>('open');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
-  const { data, error } = useSWR('/api/orders', fetcher, { refreshInterval: 5000 });
+  
+  const [refreshInterval, setRefreshInterval] = useState(0);
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    const savedRefreshInterval = localStorage.getItem('refreshInterval');
+    if (savedRefreshInterval) {
+      setRefreshInterval(parseInt(savedRefreshInterval));
+    }
+    const savedLocation = localStorage.getItem('selectedLocation');
+    if (savedLocation) {
+      setSelectedLocation(savedLocation);
+    }
+    const savedSoundEnabled = localStorage.getItem('soundEnabled');
+    if (savedSoundEnabled !== null) {
+      setSoundEnabled(JSON.parse(savedSoundEnabled));
+    }
+  }, []);
+
+  const { data, error } = useSWR(
+    `/api/orders?locationId=${selectedLocation}`,
+    fetcher,
+    { refreshInterval: refreshInterval === 0 ? 0 : refreshInterval * 1000 } // Convert seconds to milliseconds
+  );
   
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
   const [pendingCompletion, setPendingCompletion] = useState<Map<string, NodeJS.Timeout>>(new Map());
@@ -119,11 +144,13 @@ export default function Home() {
   const prevOrderCount = useRef<number>(openOrders.length);
 
   useEffect(() => {
-    if (openOrders.length > prevOrderCount.current) {
-        // Sound notification logic will be re-implemented later
+    if (openOrders.length > prevOrderCount.current && soundEnabled) {
+        // Play a simple beep sound
+        const audio = new Audio('/sounds/beep.mp3'); // You'll need to add a beep.mp3 file to your public/sounds directory
+        audio.play().catch(e => console.error("Error playing sound:", e));
     }
     prevOrderCount.current = openOrders.length;
-  }, [openOrders.length]);
+  }, [openOrders.length, soundEnabled]);
 
   if (error) return <div className="min-h-screen bg-black p-4 text-white text-center">Failed to load orders. Please try again.</div>;
 
@@ -159,14 +186,16 @@ export default function Home() {
             {!data ? (
                 <SkeletonLoader />
             ) : (
-                <OrderGrid 
-                    orders={displayedOrders}
-                    onDone={handleDoneClick}
-                    onReopen={handleReopenClick}
-                    onCardClick={handleCardClick}
-                    pendingCompletion={pendingCompletion}
-                    completedTickets={completedTickets}
-                />
+                <ErrorBoundary>
+                    <OrderGrid 
+                        orders={displayedOrders}
+                        onDone={handleDoneClick}
+                        onReopen={handleReopenClick}
+                        onCardClick={handleCardClick}
+                        pendingCompletion={pendingCompletion}
+                        completedTickets={completedTickets}
+                    />
+                </ErrorBoundary>
             )}
         </main>
       </div>

@@ -2,16 +2,38 @@
 
 import { motion } from 'framer-motion';
 import { SubPageNav } from '@/components/SubPageNav';
+import useSWR from 'swr';
+import { Order } from '@/types';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 const Dashboard = () => {
-    // Note: The analytics logic is placeholder.
-    // It should be replaced with actual data fetching and processing.
+    const { data, error } = useSWR('/api/orders', fetcher);
+
     const analytics = {
         totalTickets: 0,
-        avgTime: '0m 0s',
-        busiestHour: 'N/A',
-        topItem: 'N/A',
+        avgCompletionTime: '0m 0s',
+        rushOrders: 0,
     };
+
+    if (data && data.orders) {
+        const orders: Order[] = data.orders;
+        analytics.totalTickets = orders.length;
+        analytics.rushOrders = orders.filter(order => order.isRush).length;
+
+        const completedOrders = orders.filter(order => order.completedAt);
+        if (completedOrders.length > 0) {
+            const totalCompletionTime = completedOrders.reduce((sum, order) => {
+                const createdAt = new Date(order.createdAt).getTime();
+                const completedAt = new Date(order.completedAt!).getTime();
+                return sum + (completedAt - createdAt);
+            }, 0);
+            const avgTimeMs = totalCompletionTime / completedOrders.length;
+            const minutes = Math.floor(avgTimeMs / (1000 * 60));
+            const seconds = Math.floor((avgTimeMs / 1000) % 60);
+            analytics.avgCompletionTime = `${minutes}m ${seconds}s`;
+        }
+    }
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -29,7 +51,7 @@ const Dashboard = () => {
                     {/* Average Completion Time */}
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold mb-2">Avg. Completion Time</h2>
-                        <p className="text-3xl font-bold">{analytics.avgTime}</p>
+                        <p className="text-3xl font-bold">{analytics.avgCompletionTime}</p>
                         <p className="text-gray-400">Average time from open to completed.</p>
                     </div>
 
@@ -43,7 +65,7 @@ const Dashboard = () => {
                     {/* Rush Orders */}
                     <div className="bg-gray-800 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold mb-2">Rush Orders (24h)</h2>
-                        <p className="text-3xl font-bold">0</p>
+                        <p className="text-3xl font-bold">{analytics.rushOrders}</p>
                         <p className="text-gray-400">Number of rush orders.</p>
                     </div>
                 </div>
