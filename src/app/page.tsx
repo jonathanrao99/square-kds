@@ -47,7 +47,6 @@ export default function Home() {
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
   const [pendingCompletion, setPendingCompletion] = useState<Map<string, NodeJS.Timeout>>(new Map());
   const [modal, setModal] = useState<{isOpen: boolean, content: React.ReactNode, onConfirm: () => void}>({isOpen: false, content: null, onConfirm: () => {}});
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   useEffect(() => {
@@ -85,7 +84,6 @@ export default function Home() {
   };
   const closeModal = () => {
     setModal(p => ({...p, isOpen: false}));
-    setSelectedOrder(null);
   };
 
   const handleDoneClick = (orderId: string) => {
@@ -149,7 +147,7 @@ export default function Home() {
   };
 
   const handleCardClick = (order: Order) => {
-    setSelectedOrder(order);
+    // No need to set selectedOrder here
   };
   
   const allOrders: Order[] = data?.orders ?? [];

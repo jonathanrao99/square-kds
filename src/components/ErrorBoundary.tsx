@@ -13,7 +13,7 @@ class ErrorBoundary extends Component<Props, State> {
     hasError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
+  public static getDerivedStateFromError(): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true };
   }
@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center h-full text-white p-4">
           <h2 className="text-2xl font-bold mb-4">Oops! Something went wrong.</h2>
-          <p className="text-lg text-gray-400">We're sorry for the inconvenience. Please try refreshing the page.</p>
+          <p className="text-lg text-gray-400">We&apos;re sorry for the inconvenience. Please try refreshing the page.</p>
         </div>
       );
     }

@@ -4,8 +4,16 @@ import { squareClient, legacySquareClient } from '@/lib/square';
 import { SquareOrder, SquareLocation } from '@/types';
 
 // Safe stringify for BigInt serialization
-const safeStringify = (obj: any, ...args: any[]) =>
-    JSON.stringify(obj, (_, value) => typeof value === 'bigint' ? value.toString() : value, ...args);
+const safeStringify = (
+  obj: unknown,
+  replacer?: (this: unknown, key: string, value: unknown) => unknown,
+  space?: string | number
+) =>
+  JSON.stringify(
+    obj,
+    (_, value) => typeof value === 'bigint' ? value.toString() : value,
+    space
+  );
 
 async function fetchOrders(locationIds: string[], states: string[]): Promise<SquareOrder[]> {
     const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
@@ -22,16 +30,16 @@ async function fetchOrders(locationIds: string[], states: string[]): Promise<Squ
         },
     };
 
-    console.log(`Searching for orders with states: ${states.join(', ')} and query:`, safeStringify(query, null, 2));
+    console.log(`Searching for orders with states: ${states.join(', ')} and query:`, safeStringify(query, undefined, 2));
     const response = await legacySquareClient.ordersApi.searchOrders(query);
-    console.log(`Raw response for states ${states.join(', ')}:`, safeStringify(response.result, null, 2));
+    console.log(`Raw response for states ${states.join(', ')}:`, safeStringify(response.result, undefined, 2));
 
     const safeOrders = JSON.parse(
         safeStringify(response.result)
     );
 
     let orders: SquareOrder[] = safeOrders.orders ?? [];
-    console.log(`Orders after JSON.parse for states ${states.join(', ')}:`, safeStringify(orders, null, 2));
+    console.log(`Orders after JSON.parse for states ${states.join(', ')}:`, safeStringify(orders, undefined, 2));
 
     if (states.includes('OPEN')) {
         const initialOpenCount = orders.length;
@@ -40,7 +48,7 @@ async function fetchOrders(locationIds: string[], states: string[]): Promise<Squ
             const createdAt = new Date(order.createdAt).getTime();
             return createdAt >= new Date(eightHoursAgo).getTime();
         });
-        console.log(`OPEN orders after 8-hour filter (from ${initialOpenCount} to ${orders.length}):`, safeStringify(orders, null, 2));
+        console.log(`OPEN orders after 8-hour filter (from ${initialOpenCount} to ${orders.length}):`, safeStringify(orders, undefined, 2));
     }
 
     if (states.includes('COMPLETED')) {
@@ -84,16 +92,16 @@ export async function GET(request: Request) {
 
     // Merge orders and remove potential duplicates
     const allOrdersMap = new Map<string, SquareOrder>();
-    [...openOrders, ...completedOrders].forEach(order => {
+    [...openOrders, ...completedOrders].forEach((order: SquareOrder) => {
         allOrdersMap.set(order.id!, order);
     });
     const orders: SquareOrder[] = Array.from(allOrdersMap.values());
 
     // Process all orders for additional properties
-    orders.forEach((order: SquareOrder) => {
-        (order as any).isRush = order.ticketName?.toLowerCase().includes('rush');
+    orders.forEach((order) => {
+        (order as SquareOrder & { isRush?: boolean; isPaid?: boolean }).isRush = order.ticketName?.toLowerCase().includes('rush');
         console.log(`Processing order ${order.id}: State=${order.state}, Tenders=${JSON.stringify(order.tenders)}`);
-        (order as any).isPaid = order.tenders && order.tenders.length > 0;
+        (order as SquareOrder & { isRush?: boolean; isPaid?: boolean }).isPaid = order.tenders && order.tenders.length > 0;
     });
 
     // Sort: rush first, then by createdAt desc
@@ -103,7 +111,7 @@ export async function GET(request: Request) {
       return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
     });
 
-    console.log("Final orders being sent to frontend:", safeStringify(orders, null, 2));
+    console.log("Final orders being sent to frontend:", safeStringify(orders, undefined, 2));
     return NextResponse.json({ orders }, {
         headers: {
             'Cache-Control': 'no-store',
