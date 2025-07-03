@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { Order } from '@/types';
 import { OrderCard } from './OrderCard';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React, { useState, useEffect } from 'react';
@@ -22,6 +22,7 @@ interface SortableOrderCardProps {
     onCardClick: (order: Order) => void;
     pendingCompletion: Map<string, NodeJS.Timeout>;
     isCompleted: boolean;
+    completedTickets: Set<string>;
 }
 
 const SortableOrderCard = ({ order, onDone, onReopen, onCardClick, pendingCompletion, completedTickets }: SortableOrderCardProps) => {
@@ -60,9 +61,9 @@ export const OrderGrid = ({ orders: initialOrders, onDone, onReopen, onCardClick
         useSensor(KeyboardSensor)
     );
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-
+        if (!over) return;
         if (active.id !== over.id) {
             setOrders((items) => {
                 const oldIndex = items.findIndex(item => item.id === active.id);
@@ -70,10 +71,6 @@ export const OrderGrid = ({ orders: initialOrders, onDone, onReopen, onCardClick
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
-    };
-
-    const handleCardClick = (order: Order) => {
-        // Implementation of handleCardClick
     };
 
     return (
@@ -97,6 +94,7 @@ export const OrderGrid = ({ orders: initialOrders, onDone, onReopen, onCardClick
                                 onCardClick={onCardClick}
                                 pendingCompletion={pendingCompletion}
                                 isCompleted={completedTickets.has(order.id)}
+                                completedTickets={completedTickets}
                             />
                         ))}
                     </AnimatePresence>

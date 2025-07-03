@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Order } from '@/types';
 import { TimeAgo } from './TimeAgo';
 import { useOrderItemStatus } from '@/hooks/useOrderItemStatus';
-import React, { useState } from 'react';
+import React from 'react';
 
 interface OrderCardProps {
   order: Order;
