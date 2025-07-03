@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Order } from '@/types';
 import { TimeAgo } from './TimeAgo';
 import { useOrderItemStatus } from '@/hooks/useOrderItemStatus';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface OrderCardProps {
   order: Order;
@@ -14,7 +14,7 @@ interface OrderCardProps {
   // Props for dnd-kit
   ref?: React.Ref<HTMLDivElement>;
   style?: React.CSSProperties;
-  [key: string]: any; // To allow for attributes and listeners
+  [key: string]: unknown; // To allow for attributes and listeners
 }
 
 export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ order, onDone, onReopen, onCardClick, isPending, isCompleted, style, ...props }, ref) => {
@@ -100,3 +100,5 @@ export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ ord
     </motion.div>
   );
 });
+
+OrderCard.displayName = 'OrderCard';

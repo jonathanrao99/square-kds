@@ -67,6 +67,10 @@ export const OrderGrid = ({ orders: initialOrders, onDone, onReopen, onCardClick
         }
     };
 
+    const handleCardClick = (order: unknown) => {
+        // Implementation of handleCardClick
+    };
+
     return (
         <DndContext 
             sensors={sensors} 

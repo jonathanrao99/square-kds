@@ -8,7 +8,7 @@ import { Order } from '@/types';
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 const Dashboard = () => {
-    const { data, error } = useSWR('/api/orders', fetcher);
+    const { data } = useSWR('/api/orders', fetcher);
 
     const analytics = {
         totalTickets: 0,
