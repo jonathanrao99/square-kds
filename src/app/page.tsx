@@ -19,15 +19,10 @@ export default function Home() {
   const [tab, setTab] = useState<'open' | 'completed'>('open');
   const [isAllDayViewOpen, setIsAllDayViewOpen] = useState(true);
   
-  const [refreshInterval, setRefreshInterval] = useState(0);
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    const savedRefreshInterval = localStorage.getItem('refreshInterval');
-    if (savedRefreshInterval) {
-      setRefreshInterval(parseInt(savedRefreshInterval));
-    }
     const savedLocation = localStorage.getItem('selectedLocation');
     if (savedLocation) {
       setSelectedLocation(savedLocation);
