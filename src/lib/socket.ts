@@ -12,7 +12,7 @@ export const config = {
 const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
   if (!res.socket.server.io) {
     const path = "/api/socket";
-    const httpServer: NetServer = res.socket.server as unknown;
+    const httpServer: NetServer = res.socket.server as unknown as NetServer;
     const io = new ServerIO(httpServer, {
       path: path,
       addTrailingSlash: false,
