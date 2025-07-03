@@ -18,6 +18,7 @@ export interface LineItem {
   uid: string;
   quantity: string;
   name?: string;
+  note?: string; // Added for special instructions
 }
 
 export interface Order {

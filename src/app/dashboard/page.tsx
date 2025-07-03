@@ -14,6 +14,7 @@ const Dashboard = () => {
         totalTickets: 0,
         avgCompletionTime: '0m 0s',
         rushOrders: 0,
+        topItems: [] as { name: string; quantity: number }[],
     };
 
     if (data && data.orders) {
@@ -33,6 +34,21 @@ const Dashboard = () => {
             const seconds = Math.floor((avgTimeMs / 1000) % 60);
             analytics.avgCompletionTime = `${minutes}m ${seconds}s`;
         }
+
+        // Calculate top items
+        const itemCounts = new Map<string, number>();
+        orders.forEach(order => {
+            order.lineItems.forEach(item => {
+                const itemName = item.name || 'Unknown Item';
+                const quantity = parseInt(item.quantity || '1');
+                itemCounts.set(itemName, (itemCounts.get(itemName) || 0) + quantity);
+            });
+        });
+
+        analytics.topItems = Array.from(itemCounts.entries())
+            .map(([name, quantity]) => ({ name, quantity }))
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 5); // Top 5 items
     }
 
     return (
@@ -73,6 +89,23 @@ const Dashboard = () => {
                         <p className="text-3xl font-bold">{analytics.rushOrders}</p>
                         <p className="text-[var(--text-secondary)]">Number of rush orders.</p>
                     </div>
+                </div>
+
+                {/* Top Items */}
+                <div className="mt-12 bg-[var(--background-light)] p-6 rounded-lg">
+                    <h2 className="text-2xl font-semibold mb-4">Top 5 Most Ordered Items</h2>
+                    {analytics.topItems.length > 0 ? (
+                        <ul className="space-y-2">
+                            {analytics.topItems.map((item, index) => (
+                                <li key={index} className="flex justify-between items-center text-lg">
+                                    <span>{item.name}</span>
+                                    <span className="font-bold">{item.quantity}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-[var(--text-secondary)]">No items to display for this period.</p>
+                    )}
                 </div>
 
                 {/* Order Trends Chart */}

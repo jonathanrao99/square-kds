@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Order } from '@/types';
 import { TimeAgo } from './TimeAgo';
 import { useOrderItemStatus } from '@/hooks/useOrderItemStatus';
+import React from 'react';
 
 interface OrderCardProps {
   order: Order;
@@ -10,9 +11,13 @@ interface OrderCardProps {
   onCardClick: () => void;
   isPending: boolean;
   isCompleted: boolean;
+  // Props for dnd-kit
+  ref?: React.Ref<HTMLDivElement>;
+  style?: React.CSSProperties;
+  [key: string]: any; // To allow for attributes and listeners
 }
 
-export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isCompleted }: OrderCardProps) {
+export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ order, onDone, onReopen, onCardClick, isPending, isCompleted, style, ...props }, ref) => {
   const { itemStatus, toggleItemStatus } = useOrderItemStatus(order.lineItems, isCompleted);
 
   const getHeaderColor = () => {
@@ -34,6 +39,9 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
 
   return (
     <motion.div
+        ref={ref}
+        style={style}
+        {...props}
         variants={cardVariants}
         initial="initial"
         animate={isPending ? "pending" : "animate"}
@@ -66,6 +74,7 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
                         >
                             <span className="font-bold mr-3">{item.quantity} x</span>
                             <span>{item.name}</span>
+                            {item.note && <p className="text-sm text-[var(--text-secondary)] italic ml-6">{item.note}</p>}
                         </li>
                     );
                 })}
@@ -90,4 +99,4 @@ export function OrderCard({ order, onDone, onReopen, onCardClick, isPending, isC
         </div>
     </motion.div>
   );
-}
+});
