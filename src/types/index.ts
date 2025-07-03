@@ -12,7 +12,7 @@ export type NextApiResponseServerIo = NextApiResponse & {
 };
 
 // Square API specific types
-export interface SquareOrder extends SquareApiOrder {}
+export type SquareOrder = SquareApiOrder;
 
 export interface LineItem {
   uid: string;

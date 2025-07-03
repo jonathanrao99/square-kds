@@ -146,7 +146,7 @@ export default function Home() {
     });
   };
 
-  const handleCardClick = (order: Order) => {
+  const handleCardClick = () => {
     // No need to set selectedOrder here
   };
   

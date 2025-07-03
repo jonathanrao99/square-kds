@@ -113,9 +113,9 @@ export async function GET(request: Request) {
     });
 
     // Sort: rush first, then by createdAt desc
-    orders.sort((a: any, b: any) => {
-      if ((a as any).isRush && !(b as any).isRush) return -1;
-      if (!(a as any).isRush && (b as any).isRush) return 1;
+    orders.sort((a: KDSOrder, b: KDSOrder) => {
+      if (a.isRush && !b.isRush) return -1;
+      if (!a.isRush && b.isRush) return 1;
       return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
     });
 
