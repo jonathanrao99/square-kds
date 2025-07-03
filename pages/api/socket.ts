@@ -13,7 +13,7 @@ export default function Socket(req: NextApiRequest, res: NextApiResponseServerIo
   if (!(res.socket as unknown as { server: { io?: ServerIO } }).server.io) {
     console.log("*First use, starting socket.io");
 
-    const httpServer = res.socket.server as NetServer;
+    const httpServer = res.socket.server as unknown as NetServer;
     const io = new ServerIO(httpServer, {
       path: "/api/socket",
       addTrailingSlash: false,
