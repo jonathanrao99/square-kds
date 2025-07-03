@@ -41,7 +41,7 @@ export default function Home() {
   const { data, error } = useSWR(
     `/api/orders?locationId=${selectedLocation}`,
     fetcher,
-    { refreshInterval: refreshInterval === 0 ? 0 : refreshInterval * 1000 } // Convert seconds to milliseconds
+    { refreshInterval: 5000 } // Enforce 5-second refresh
   );
   
   const [completedTickets, setCompletedTickets] = useState<Set<string>>(new Set());
