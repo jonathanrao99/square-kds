@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { SubPageNav } from '@/components/SubPageNav';
+import { Header } from '@/components/Header';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Settings() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('dark'); // Keep theme state for now, but remove UI controls
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [refreshInterval, setRefreshInterval] = useState(0); // 0 for webhook-driven, >0 for polling
@@ -45,29 +45,16 @@ export default function Settings() {
 
   return (
     <div className={`min-h-screen bg-[var(--background-dark)] text-[var(--text-primary)]`}>
-      <SubPageNav />
+      <Header 
+        navLinks={[
+          { href: "/", label: "Back to KDS" },
+          { href: "/dashboard", label: "Analytics" },
+        ]}
+      />
       <main className="p-8">
         <h1 className="text-4xl font-bold mb-8">Settings</h1>
         <div className="space-y-12">
-          {/* Theme Settings */}
-          <div className="p-6 bg-[var(--background-light)] rounded-lg">
-            <h2 className="text-2xl font-semibold mb-4">Theme</h2>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => setTheme('dark')}
-                className={`px-4 py-2 rounded-md ${theme === 'dark' ? 'bg-[var(--accent-orange)] text-white' : 'bg-[var(--background-dark)] text-[var(--text-primary)]'}`}
-              >
-                Dark
-              </button>
-              <button 
-                onClick={() => setTheme('light')}
-                className={`px-4 py-2 rounded-md ${theme === 'light' ? 'bg-[var(--accent-orange)] text-white' : 'bg-[var(--background-dark)] text-[var(--text-primary)]'}`}
-              >
-                Light
-              </button>
-            </div>
-          </div>
-
+          {/* Theme Settings - Removed UI controls */}
           {/* Sound Notification Settings */}
           <div className="p-6 bg-[var(--background-light)] rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Sound Notifications</h2>

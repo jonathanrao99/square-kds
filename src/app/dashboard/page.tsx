@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { SubPageNav } from '@/components/SubPageNav';
+import { Header } from '@/components/Header';
 import useSWR from 'swr';
 import { Order } from '@/types';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 const Dashboard = () => {
-    const { data } = useSWR('/api/orders', fetcher);
+    const { data, error } = useSWR('/api/orders', fetcher);
 
     const analytics = {
         totalTickets: 0,
@@ -24,7 +24,7 @@ const Dashboard = () => {
         const completedOrders = orders.filter(order => order.completedAt);
         if (completedOrders.length > 0) {
             const totalCompletionTime = completedOrders.reduce((sum, order) => {
-                const createdAt = new Date(order.createdAt).getTime();
+                const createdAt = new Date(order.createdAt!).getTime();
                 const completedAt = new Date(order.completedAt!).getTime();
                 return sum + (completedAt - createdAt);
             }, 0);
@@ -37,7 +37,12 @@ const Dashboard = () => {
 
     return (
         <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-primary)]">
-            <SubPageNav />
+            <Header 
+                navLinks={[
+                    { href: "/", label: "Back to KDS" },
+                    { href: "/settings", label: "Settings" },
+                ]}
+            />
             <main className="p-8">
                 <motion.h1 
                     initial={{ opacity: 0, y: -19 }}
