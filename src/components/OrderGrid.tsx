@@ -15,8 +15,13 @@ interface OrderGridProps {
     completedTickets: Set<string>;
 }
 
-interface SortableOrderCardProps extends OrderGridProps {
+interface SortableOrderCardProps {
     order: Order;
+    onDone: (orderId: string) => void;
+    onReopen: (orderId: string) => void;
+    onCardClick: (order: Order) => void;
+    pendingCompletion: Map<string, NodeJS.Timeout>;
+    isCompleted: boolean;
 }
 
 const SortableOrderCard = ({ order, onDone, onReopen, onCardClick, pendingCompletion, completedTickets }: SortableOrderCardProps) => {
@@ -67,7 +72,7 @@ export const OrderGrid = ({ orders: initialOrders, onDone, onReopen, onCardClick
         }
     };
 
-    const handleCardClick = (order: unknown) => {
+    const handleCardClick = (order: Order) => {
         // Implementation of handleCardClick
     };
 

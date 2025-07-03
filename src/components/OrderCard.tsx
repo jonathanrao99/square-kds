@@ -6,15 +6,14 @@ import React, { useState } from 'react';
 
 interface OrderCardProps {
   order: Order;
-  onDone: () => void;
-  onReopen: () => void;
-  onCardClick: () => void;
+  onDone: (orderId: string) => void;
+  onReopen: (orderId: string) => void;
+  onCardClick: (order: Order) => void;
   isPending: boolean;
   isCompleted: boolean;
   // Props for dnd-kit
   ref?: React.Ref<HTMLDivElement>;
   style?: React.CSSProperties;
-  [key: string]: unknown; // To allow for attributes and listeners
 }
 
 export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ order, onDone, onReopen, onCardClick, isPending, isCompleted, style, ...props }, ref) => {
@@ -48,7 +47,7 @@ export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ ord
         exit="exit"
         layout
         className={`rounded-lg shadow-2xl bg-[var(--background-light)] text-[var(--text-primary)] border border-[var(--border-color)] w-[360px] shrink-0 flex flex-col max-h-screen ${order.isRush ? 'border-[var(--accent-orange)] border-2' : ''}`}
-        onClick={isPending ? onReopen : onCardClick}
+        onClick={isPending ? () => onReopen(order.id) : () => onCardClick(order)}
     >
         {/* Fixed Header */}
         <div className={`p-4 rounded-t-lg ${getHeaderColor()} flex justify-between items-center shrink-0`}>
@@ -88,7 +87,7 @@ export const OrderCard = React.forwardRef<HTMLDivElement, OrderCardProps>(({ ord
                     </div>
                 ) : (
                     <button
-                        onClick={!isPending ? onDone : undefined}
+                        onClick={!isPending ? () => onDone(order.id) : undefined}
                         className="text-[var(--accent-orange)] font-semibold text-center w-full hover:text-[var(--accent-orange-dark)] transition-colors disabled:opacity-50 disabled:cursor-wait"
                         disabled={isPending}
                     >
